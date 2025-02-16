@@ -16,16 +16,14 @@ class GameEngine {
 	lastFrameTime = performance.now();
 	GameObjectDict = {}
 	GameObjectList = []
-
-	//TEMP - CAM WILL BE MADE INTO OBJECT
-	CamPos = new Vector2()
-
+	
 	constructor(Canvas, Size = new Vector2(500, 500)){
 		this.canvas = Canvas;
 		this.ctx = this.canvas.getContext('2d');
 		this.canvas.width = Size.x;
 		this.canvas.height = Size.y;
 		this.screenSize = Size;
+		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"})
 	}
 
 	DrawScene(){
@@ -92,14 +90,14 @@ class GameEngine {
 	}
 
 	worldToScreenSpace(pos){
-		var relativePos = Vector2.sub(pos, this.CamPos);
+		var relativePos = Vector2.sub(pos, this.CameraObject.position);
 		relativePos = Vector2.add(relativePos, Vector2.div(this.screenSize, 2));
 		return relativePos
 	}
 
 	screenToWorldSpace(pos){
 		var relativePos = Vector2.sub(pos, Vector2.div(this.screenSize, 2));
-		relativePos = Vector2.add(relativePos, this.CamPos);
+		relativePos = Vector2.add(relativePos, this.CameraObject.position);
 		return relativePos
 	}
 }
