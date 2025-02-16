@@ -1,0 +1,3 @@
+# JSGameEngine
+
+JSGameEngine is a simple game engine written in JavaScript.
