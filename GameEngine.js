@@ -5,7 +5,7 @@
  * Object Handler
  * */
 const BasicSquarePath = new Path2D();
-BasicSquarePath.rect(-25, -25, 25, 25);
+BasicSquarePath.rect(-5, -5, 10, 10);
 
 function GetUUID(){
 	return Math.random().toString(16).slice(2)
@@ -16,17 +16,49 @@ class GameEngine {
 	lastFrameTime = performance.now();
 	GameObjectDict = {}
 	GameObjectList = []
-	
+	KeysDown = {}
+	KeysPressed = {}
+	ClickLimit = 200;
 	constructor(Canvas, Size = new Vector2(500, 500)){
 		this.canvas = Canvas;
 		this.ctx = this.canvas.getContext('2d');
 		this.canvas.width = Size.x;
 		this.canvas.height = Size.y;
 		this.screenSize = Size;
-		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"})
+		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"});
+
+		this.KeyDownEventHandler = this.KeyDownEventHandler.bind(this);
+		this.KeyUpEventHandler = this.KeyUpEventHandler.bind(this);
+		addEventListener("keydown", this.KeyDownEventHandler);
+		addEventListener("keyup", this.KeyUpEventHandler);
 	}
 
-	DrawScene(){
+	KeyDownEventHandler(event){
+		if(!(event.key in this.KeysDown)){
+			this.KeysDown[event.key] = { }
+		}
+	}
+
+	KeyUpEventHandler(event){
+		if(event.key in this.KeysDown){
+			this.KeysPressed[event.key] = { pressed: performance.now() };
+			delete this.KeysDown[event.key];
+		}
+	}
+
+	IsKeyPressed(key){
+		if (key in this.KeysPressed && this.KeysPressed[key].pressed - performance.now() <= this.ClickLimit){
+			delete this.KeysPressed[key];
+			return true;
+		}
+		return false;
+	}
+
+	IsKeyDown(key){
+		return (key in this.KeysDown);
+	}
+
+	#DrawScene(){
 		//TODO
 		//Expand functionality to change draw style depending on object type
 		//Don't draw objects not currently on screen
@@ -72,7 +104,7 @@ class GameEngine {
 
 		if (this.LoopCall != null) await this.LoopCall(dt)
 		
-		this.DrawScene();
+		this.#DrawScene();
 
 		setTimeout(() => this.Loop(), 1)
 	}
@@ -91,6 +123,7 @@ class GameEngine {
 
 	worldToScreenSpace(pos){
 		var relativePos = Vector2.sub(pos, this.CameraObject.position);
+		relativePos.y *= -1;
 		relativePos = Vector2.add(relativePos, Vector2.div(this.screenSize, 2));
 		return relativePos
 	}
@@ -98,13 +131,14 @@ class GameEngine {
 	screenToWorldSpace(pos){
 		var relativePos = Vector2.sub(pos, Vector2.div(this.screenSize, 2));
 		relativePos = Vector2.add(relativePos, this.CameraObject.position);
+		relativePos.y *= -1;
 		return relativePos
 	}
 }
 
 class GameObject{
 	constructor({
-		position = new Vector2(), 
+		position = Vector2.Zero, 
 		scale = new Vector2(1,1), 
 		colliderSize = new Vector2(1, 1), 
 		colliderOffset = new Vector2(0, 0), 
@@ -136,7 +170,13 @@ class CustomShapeObject extends GameObject{
 }
 
 class Vector2{
-	constructor(x = 0, y = 0)
+	static Up = new Vector2(0, 1);
+	static Down = new Vector2(0, -1);
+	static Left = new Vector2(-1, 0);
+	static Right = new Vector2(1, 0);
+	static Zero = new Vector2(0, 0);
+
+	constructor(x, y)
 	{
 		this.x = x;
 		this.y = y;
@@ -157,5 +197,15 @@ class Vector2{
 	static div(a, x)
 	{
 		return new Vector2(a.x / x, a.y / x);
+	}
+	static #magnitude(a){
+		return Math.sqrt(a.x * a.x + a.y * a.y);
+	}
+	static normalize(a){
+		let mag = Vector2.#magnitude(a);
+		if (mag === 0){
+			return Vector2.Zero;
+		}
+		return new Vector2(a.x / mag, a.y / mag);
 	}
 }
