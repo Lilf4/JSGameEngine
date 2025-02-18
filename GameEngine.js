@@ -3,9 +3,19 @@
  * Way too many things ;-;
  * Input Handler
  * Object Handler
+ * Don't draw objects not currently on screen
  * */
 const BasicSquarePath = new Path2D();
 BasicSquarePath.rect(-5, -5, 10, 10);
+
+const BasicSpherePath = new Path2D();
+BasicSpherePath.ellipse(0, 0, 5, 5, 0, 0, 360);
+
+const BasicTrianglePath = new Path2D();
+BasicTrianglePath.moveTo(0, -5);
+BasicTrianglePath.lineTo(-5, 5);
+BasicTrianglePath.lineTo(5, 5);
+BasicTrianglePath.closePath();
 
 function GetUUID(){
 	return Math.random().toString(16).slice(2)
@@ -34,20 +44,28 @@ class GameEngine {
 	}
 
 	KeyDownEventHandler(event){
+		event.preventDefault();
 		if(!(event.key in this.KeysDown)){
 			this.KeysDown[event.key] = { }
 		}
 	}
 
 	KeyUpEventHandler(event){
+		event.preventDefault();
 		if(event.key in this.KeysDown){
 			this.KeysPressed[event.key] = { pressed: performance.now() };
 			delete this.KeysDown[event.key];
+			
+			setTimeout(() => {
+				if (event.key in this.KeysPressed && performance.now() - this.KeysPressed[event.key]?.pressed > this.ClickLimit) {
+					delete this.KeysPressed[event.key];
+				}
+			}, this.ClickLimit + 10);
 		}
 	}
 
 	IsKeyPressed(key){
-		if (key in this.KeysPressed && this.KeysPressed[key].pressed - performance.now() <= this.ClickLimit){
+		if (key in this.KeysPressed && performance.now() - this.KeysPressed[key].pressed <= this.ClickLimit){
 			delete this.KeysPressed[key];
 			return true;
 		}
@@ -59,19 +77,72 @@ class GameEngine {
 	}
 
 	#DrawScene(){
-		//TODO
-		//Expand functionality to change draw style depending on object type
-		//Don't draw objects not currently on screen
 		this.ctx.fillStyle = this.background
 		this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-
 		this.GameObjectList.forEach(object => {
-			let objScreenPos = this.worldToScreenSpace(object.position);
-			this.ctx.save();
-			this.ctx.translate(objScreenPos.x, objScreenPos.y);
-			this.ctx.fillStyle = object.color;
-			this.ctx.fill(object.shape);
-			this.ctx.restore();
+			if (!(object instanceof VisibleObject) || !object.visible) {return;}
+			switch(true){
+				case object instanceof CustomShapeObject:
+					var objScreenPos = this.worldToScreenSpace(object.position);
+					this.ctx.save();
+					this.ctx.translate(objScreenPos.x, objScreenPos.y);
+					this.ctx.rotate(object.rotation * Math.PI / 180);
+					this.ctx.scale(object.scale.x, object.scale.y);
+					if(object.drawAsOutline){
+						this.ctx.strokeStyle = object.color;
+						this.ctx.lineWidth = object.outlineThickness;
+						this.ctx.stroke(object.shape);
+					}
+					else{
+						this.ctx.fillStyle = object.color;
+						this.ctx.fill(object.shape);
+					}
+					this.ctx.restore();
+					if (object.drawCollider){
+						let colliderPos = this.worldToScreenSpace(object.movedColliderPosition)
+						this.ctx.save();
+						this.ctx.translate(colliderPos.x, colliderPos.y);
+						this.ctx.rotate(object.rotation * Math.PI / 180);
+						this.ctx.scale(object.scale.x, object.scale.y);
+						this.ctx.beginPath();
+						this.ctx.strokeStyle = 'red';
+						this.ctx.lineWidth = 1;
+						this.ctx.rect(-(object.colliderSize.x / 2), -(object.colliderSize.y / 2), object.colliderSize.x, object.colliderSize.y)
+						this.ctx.closePath();
+						this.ctx.stroke();
+						this.ctx.restore();
+					}
+					break;
+				case object instanceof TextObject:
+					var objScreenPos = this.worldToScreenSpace(object.position)
+					this.ctx.save();
+					this.ctx.translate(objScreenPos.x, objScreenPos.y);
+					this.ctx.rotate(object.rotation * Math.PI / 180);
+					this.ctx.scale(object.scale.x, object.scale.y);
+					this.ctx.font = object.font;
+					this.ctx.textAlign = object.alignment;
+					let y = 0;
+					let lines = object.text.split("\n");
+					if(object.drawAsOutline){
+						this.ctx.strokeStyle = object.color;
+						this.ctx.lineWidth = object.outlineThickness;
+						lines.forEach(line => {
+							this.ctx.strokeText(line, 0, y);
+							y += object.lineHeight;
+						});
+					}
+					else{
+						this.ctx.fillStyle = object.color;
+						lines.forEach(line => {
+							this.ctx.fillText(line, 0, y);
+							y += object.lineHeight;
+						});
+					}
+					this.ctx.restore();
+					break
+			}
+			
+
 		});
 	}
 
@@ -84,11 +155,92 @@ class GameEngine {
 		this.GameObjectDict[uuid] = object
 		this.CreateObjectRenderOrderList()
 	}
+
+	RemObject(object){
+		if(object.id in this.GameObjectDict){
+			delete this.GameObjectDict[object.id]
+		}
+		this.CreateObjectRenderOrderList();
+	}
 	
 	CreateObjectRenderOrderList(){
 		this.GameObjectList = [];
 		this.GameObjectList = Object.values(this.GameObjectDict).sort((a, b) => b.layer - a.layer);
 	}
+
+	GetCollidingObjects(object){
+		let collidingObjects = []
+		let colliderPosition = object.movedColliderPosition;
+		let colliderSize = object.scaledColliderSize;
+		this.GameObjectList.forEach(checkObject => {
+			if (object.id != checkObject.id){
+				if (this.#checkOBBCollision(colliderPosition, colliderSize, object.rotation, checkObject.movedColliderPosition, checkObject.scaledColliderSize, checkObject.rotation)){
+					collidingObjects.push(checkObject);
+				}
+			}
+		});
+		return collidingObjects;
+	}
+
+	#getRotatedCorners(position, size, rotation){
+		let radians = rotation * (Math.PI / 180);
+		let cosA = Math.cos(radians);
+		let sinA = Math.sin(-radians);
+
+		let halfSize = size.mult(.5);
+
+		let corners = [
+			new Vector2(-halfSize.x, -halfSize.y),
+			new Vector2(halfSize.x, -halfSize.y),
+			new Vector2(halfSize.x, halfSize.y),
+			new Vector2(-halfSize.x, halfSize.y),
+		].map(v => new Vector2(
+			position.x + v.x * cosA - v.y * sinA,
+        	position.y + v.x * sinA + v.y * cosA
+		));
+
+		return corners;
+	}
+
+	#projectVertices(vertices, axis) {
+		let min = axis.dot(vertices[0]);
+		let max = min;
+	
+		for (let i = 1; i < vertices.length; i++) {
+			let projection = axis.dot(vertices[i]);
+			if (projection < min) min = projection;
+			if (projection > max) max = projection;
+		}
+	
+		return { min, max };
+	}
+
+	#overlaps(projA, projB) {
+		return projA.max >= projB.min && projB.max >= projA.min;
+	}
+
+	#checkOBBCollision(posA, zA, angleA, posB, zB, angleB) {
+		const rectA = this.#getRotatedCorners(posA, zA, angleA);
+		const rectB = this.#getRotatedCorners(posB, zB, angleB);
+	
+		const axes = [
+			rectA[1].sub(rectA[0]).normalize(), // Edge 1 of A
+			rectA[3].sub(rectA[0]).normalize(), // Edge 2 of A
+			rectB[1].sub(rectB[0]).normalize(), // Edge 1 of B
+			rectB[3].sub(rectB[0]).normalize()  // Edge 2 of B
+		];
+	
+		for (let axis of axes) {
+			let projA = this.#projectVertices(rectA, axis);
+			let projB = this.#projectVertices(rectB, axis);
+	
+			if (!this.#overlaps(projA, projB)) {
+				return false; // No collision found
+			}
+		}
+	
+		return true; // If no gaps, collision detected
+	}	
 
 	async Start(){
 		this.running = true;
@@ -138,34 +290,94 @@ class GameEngine {
 
 class GameObject{
 	constructor({
-		position = Vector2.Zero, 
-		scale = new Vector2(1,1), 
-		colliderSize = new Vector2(1, 1), 
-		colliderOffset = new Vector2(0, 0), 
+		position = Vector2.Zero,
+		rotation = 0,
+		scale = new Vector2(1,1),
+		colliderSize = new Vector2(10, 10), 
+		colliderOffset = new Vector2(0, 0),
+		drawCollider = false,
 		name = 'GameObject'
 	} = {})
 	{
 		this.id = -1;
 		this.name = name;
 		this.position = position;
+		this.rotation = rotation;
 		this.scale = scale;
 		this.colliderSize = colliderSize;
 		this.colliderOffset = colliderOffset;
+		this.drawCollider = drawCollider;
+	}
+
+	get localUp(){
+		let radians = (this.rotation - 90) * (Math.PI / 180);
+		return new Vector2(Math.cos(radians), Math.sin(-radians));
+	}
+
+	get localRight(){
+		let radians = this.rotation * (Math.PI / 180);
+		return new Vector2(Math.cos(radians), Math.sin(-radians));
+	}
+
+	get movedColliderPosition(){
+		return this.position.add(this.localUp.mult(this.colliderOffset.y)).add(this.localRight.mult(this.colliderOffset.x));
+	}
+
+	get scaledColliderSize(){
+		return new Vector2(this.colliderSize.x * this.scale.x, this.colliderSize.y * this.scale.y);
 	}
 }
 
-class CustomShapeObject extends GameObject{
+class VisibleObject extends GameObject{
 	constructor({
 		layer = 0,
+		visible = true,
+		...GameObjectOptions
+	})
+	{
+		super(GameObjectOptions)
+		this.layer = layer;
+		this.visible = visible;
+	}
+}
+
+class CustomShapeObject extends VisibleObject{
+	constructor({
 		shape = new Path2D(),
 		color = 'white',
+		drawAsOutline = false,
+		outlineThickness = 1,
 		...GameObjectOptions
 	} = {})
 	{
 		super(GameObjectOptions)
+		this.drawAsOutline = drawAsOutline;
+		this.outlineThickness = outlineThickness;
 		this.shape = shape;
-		this.layer = layer;
 		this.color = color;
+	}
+}
+
+class TextObject extends VisibleObject{
+	constructor({
+		text = "new text!",
+		color = 'white',
+		drawAsOutline = false,
+		outlineThickness = 1,
+		font = "30px Verdana",
+		alignment = "left",
+		lineHeight = 30,
+		...GameObjectOptions
+	} = {})
+	{
+		super(GameObjectOptions)
+		this.drawAsOutline = drawAsOutline;
+		this.outlineThickness = outlineThickness;
+		this.color = color;
+		this.text = text;
+		this.font = font;
+		this.alignment = alignment;
+		this.lineHeight = lineHeight;
 	}
 }
 
@@ -186,26 +398,58 @@ class Vector2{
 	{
 		return new Vector2(a.x + b.x, a.y + b.y);
 	}
+	add(b)
+	{
+		return new Vector2(this.x + b.x, this.y + b.y);
+	}
 	static sub(a, b)
 	{
 		return new Vector2(a.x - b.x, a.y - b.y);
+	}
+	sub(b)
+	{
+		return new Vector2(this.x - b.x, this.y - b.y);
 	}
 	static mult(a, x)
 	{
 		return new Vector2(a.x * x, a.y * x);
 	}
+	mult(x)
+	{
+		return new Vector2(this.x * x, this.y * x);
+	}
 	static div(a, x)
 	{
 		return new Vector2(a.x / x, a.y / x);
 	}
-	static #magnitude(a){
+	div(x)
+	{
+		return new Vector2(this.x / x, this.y / x);
+	}
+	static magnitude(a){
 		return Math.sqrt(a.x * a.x + a.y * a.y);
 	}
+	magnitude(){
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
 	static normalize(a){
-		let mag = Vector2.#magnitude(a);
+		let mag = Vector2.magnitude(a);
 		if (mag === 0){
 			return Vector2.Zero;
 		}
 		return new Vector2(a.x / mag, a.y / mag);
+	}
+	normalize(){
+		let mag = Vector2.magnitude(this);
+		if (mag === 0){
+			return Vector2.Zero;
+		}
+		return new Vector2(this.x / mag, this.y / mag);
+	}
+	static dot(a, b){
+		return a.x * b.x + a.y * b.y
+	}
+	dot(b){
+		return this.x * b.x + this.y * b.y
 	}
 }
