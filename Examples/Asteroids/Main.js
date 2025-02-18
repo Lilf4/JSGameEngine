@@ -3,15 +3,6 @@ let Engine = new GameEngine(
 	new Vector2(1200, 800)
 );
 
-//TODO:
-//Add asteroids
-//Three stages, big, medium and small
-//When destroyed big turns to 2 mediums, medium turns to 2 small, small dissapears
-//Points: Big - 20, Medium - 50, Small - 100
-//Add ufo
-//One stage
-//When destroyed dessapears
-//Points: 
 Engine.SetInitFunction(INIT)
 Engine.SetLoopFunction(GAMELOGIC)
 
