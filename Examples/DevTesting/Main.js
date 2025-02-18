@@ -18,6 +18,7 @@ async function INIT(){
 
 moveDir = new Vector2(1, 1);
 
+let scaleDir = 1;
 async function GAMELOGIC(delta){
 	let moveDir = new Vector2(0,0);
 	if(Engine.IsKeyPressed(" ")){
@@ -35,7 +36,15 @@ async function GAMELOGIC(delta){
 	if(Engine.IsKeyDown("s")){
 		moveDir.y -= 1;
 	}
-	test.position = Vector2.add(Vector2.mult(Vector2.mult(Vector2.normalize(moveDir), 100), delta), test.position)
+	test.position = test.position.add(moveDir.normalize().mult(100 * delta))
+	test.rotation += delta * 100;
+	if (test.scale.x >= 20){
+		scaleDir = -1;
+	}
+	else if(test.scale.x <= 1){
+		scaleDir = 1;
+	}
+	test.scale = test.scale.add(new Vector2(1,1).mult(scaleDir).mult(delta * 10));
 }
 
 
