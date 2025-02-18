@@ -31,7 +31,7 @@ asteroidPath.lineTo(size * 1, size * 0.6);
 asteroidPath.lineTo(size * 0.5, size * 0.2);
 asteroidPath.closePath();
 
-let Player = new CustomShapeObject({shape: BasicTrianglePath, name: "Player", scale: new Vector2(1.5, 2), drawAsOutline: true, outlineThickness: 1.5, drawCollider: true, colliderSize: new Vector2(10, 10)})
+let Player = new CustomShapeObject({shape: BasicTrianglePath, name: "Player", scale: new Vector2(1.5, 2), drawAsOutline: true, outlineThickness: 1.5, colliderSize: new Vector2(10, 10)})
 let PlayerFlame = new CustomShapeObject({shape: BasicTrianglePath, name: "PlayerFlame", scale: new Vector2(1, -1.25), drawAsOutline: true, visible: false})
 let Hearts = [
 	new CustomShapeObject({shape: BasicTrianglePath, name: "HeartDisplay", scale: new Vector2(1.5, 2), drawAsOutline: true, outlineThickness: 1.5, position: new Vector2(-(Engine.screenSize.x / 2 - 15), (Engine.screenSize.y / 2 - 20))}),
@@ -139,7 +139,7 @@ async function GAMELOGIC(delta){
 
 	if(Engine.IsKeyDown(" ") && performance.now() - LastShot >= ShootingCooldown){
 		LastShot = performance.now();
-		let newBullet = new CustomShapeObject({shape: BasicSpherePath, name: "Bullet", scale: new Vector2(0.6, 0.6), position: Player.position, drawAsOutline: true, outlineThickness: 2, drawCollider: true, colliderSize: new Vector2(10, 10)});
+		let newBullet = new CustomShapeObject({shape: BasicSpherePath, name: "Bullet", scale: new Vector2(0.6, 0.6), position: Player.position, drawAsOutline: true, outlineThickness: 2, colliderSize: new Vector2(10, 10)});
 		Engine.AddObject(newBullet);
 		Bullets.push({object: newBullet, direction: Player.localUp, creationTime: LastShot});
 	}
