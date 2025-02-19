@@ -5,6 +5,9 @@ ErrorFn() {
 	printf "Error: %s\n" "${ErrorCodes[$error]}"
 	exit 1
 }
+if [ ! -d "Projects" ]; then
+	mkdir "Projects"
+fi
 while [ $# -gt 0 ]; do
   case "$1" in
     -n=*|--name=*)
