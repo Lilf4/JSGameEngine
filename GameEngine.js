@@ -21,6 +21,12 @@ function GetUUID(){
 	return Math.random().toString(16).slice(2)
 }
 
+function LoadImage(path){
+	let img = new Image();
+	img.src = path;
+	return img;
+}
+
 class GameEngine {
 	background = 'black';
 	lastFrameTime = performance.now();
@@ -140,9 +146,48 @@ class GameEngine {
 					}
 					this.ctx.restore();
 					break
+				case object instanceof ImageObject:
+					//TODO
+					//Repeat - FIX ONE AXIS REPEATING
+					var objScreenPos = this.worldToScreenSpace(object.position)
+					var ImageSize = object.useSourceSize ? new Vector2(object.image.width, object.image.height) : object.size;
+					var SourceImagePosition = object.overrideImgSourcePosition == null ? Vector2.Zero : object.overrideImgSourcePosition;
+					var SourceImageSize = object.overrideImgSourceSize == null ? new Vector2(object.image.width, object.image.height) : object.overrideImgSourceSize;
+					this.ctx.save();
+					this.ctx.translate(objScreenPos.x, objScreenPos.y);
+					this.ctx.rotate(object.rotation * Math.PI / 180);
+					this.ctx.scale(object.scale.x, object.scale.y);
+					if (!object.repeat){
+						this.ctx.drawImage(
+							object.image, 
+							SourceImagePosition.x,
+							SourceImagePosition.y,
+							SourceImageSize.x,
+							SourceImageSize.y,
+							-(ImageSize.x / 2), 
+							-(ImageSize.y / 2), 
+							ImageSize.x, 
+							ImageSize.y
+						)
+					}
+					else{
+						let repeatMode;
+						if(object.repeatX && object.repeatY){
+							repeatMode = "repeat";
+						}
+						else if(object.repeatX){
+							repeatMode = "repeat-x";
+						}
+						else if(object.repeatY){
+							repeatMode = "repeat-y";
+						}
+						let imgPattern = this.ctx.createPattern(object.image, repeatMode)
+						this.ctx.fillStyle = imgPattern;
+						this.ctx.fillRect(-(ImageSize.x / 2), -(ImageSize.y / 2), ImageSize.x, ImageSize.y)
+					}
+					this.ctx.restore();
+					break
 			}
-			
-
 		});
 	}
 
@@ -355,6 +400,31 @@ class CustomShapeObject extends VisibleObject{
 		this.outlineThickness = outlineThickness;
 		this.shape = shape;
 		this.color = color;
+	}
+}
+
+class ImageObject extends VisibleObject{
+	constructor({
+		image = new Image(),
+		repeat = false,
+		repeatX = true,
+		repeatY = true,
+		useSourceSize = true,
+		size = null,
+		overrideImgSourceSize = null,
+		overrideImgSourcePosition = null,
+		...GameObjectOptions
+	} = {})
+	{
+		super(GameObjectOptions)
+		this.image = image;
+		this.repeat = repeat;
+		this.useSourceSize = useSourceSize;
+		this.size = size;
+		this.repeatX = repeatX;
+		this.repeatY = repeatY;
+		this.overrideImgSourceSize = overrideImgSourceSize;
+		this.overrideImgSourcePosition = overrideImgSourcePosition;
 	}
 }
 
