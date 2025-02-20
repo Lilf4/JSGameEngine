@@ -3,10 +3,10 @@ Engine = new GameEngine(
 	new Vector2(600, 400)
 );
 
-Engine.SetInitFunction(INIT)
-Engine.SetLoopFunction(GAMELOGIC)
+Engine.SetInitFunction(INIT);
+Engine.SetLoopFunction(GAMELOGIC);
 
-Engine.Start()
+Engine.Start();
 
 async function INIT(){
 	//Gets called once when the engine is started
