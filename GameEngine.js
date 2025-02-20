@@ -27,6 +27,12 @@ function LoadImage(path){
 	return img;
 }
 
+//function LoadSpriteSheet(path){
+//	let img = new Image();
+//	img.src = path;
+//	return img;
+//}
+
 class GameEngine {
 	background = 'black';
 	lastFrameTime = performance.now();
@@ -82,7 +88,7 @@ class GameEngine {
 		return (key in this.KeysDown);
 	}
 
-	#DrawScene(){
+	#DrawScene(delta){
 		this.ctx.fillStyle = this.background
 		this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.GameObjectList.forEach(object => {
@@ -147,8 +153,6 @@ class GameEngine {
 					this.ctx.restore();
 					break
 				case object instanceof ImageObject:
-					//TODO
-					//Repeat - FIX ONE AXIS REPEATING
 					var objScreenPos = this.worldToScreenSpace(object.position)
 					var ImageSize = object.useSourceSize ? new Vector2(object.image.width, object.image.height) : object.size;
 					var SourceImagePosition = object.overrideImgSourcePosition == null ? Vector2.Zero : object.overrideImgSourcePosition;
@@ -171,21 +175,42 @@ class GameEngine {
 						)
 					}
 					else{
-						let repeatMode;
-						if(object.repeatX && object.repeatY){
-							repeatMode = "repeat";
-						}
-						else if(object.repeatX){
-							repeatMode = "repeat-x";
-						}
-						else if(object.repeatY){
-							repeatMode = "repeat-y";
-						}
-						let imgPattern = this.ctx.createPattern(object.image, repeatMode)
+						let repeatMode = 'repeat';
+						let patternTransform = this.ctx.getTransform();
+
+						patternTransform.e = -(ImageSize.x / 2);
+						patternTransform.f = -(ImageSize.y / 2);
+
+						let imgPattern = this.ctx.createPattern(object.image, repeatMode);
 						this.ctx.fillStyle = imgPattern;
-						this.ctx.fillRect(-(ImageSize.x / 2), -(ImageSize.y / 2), ImageSize.x, ImageSize.y)
+						if(imgPattern != null){
+							imgPattern.setTransform(patternTransform);
+							this.ctx.fillRect(-(ImageSize.x / 2), -(ImageSize.y / 2), ImageSize.x, ImageSize.y)
+						}
 					}
 					this.ctx.restore();
+					break
+				case object instanceof ImageAnimObject:
+					//TODO
+					var objScreenPos = this.worldToScreenSpace(object.position)
+					this.ctx.save();
+					this.ctx.translate(objScreenPos.x, objScreenPos.y);
+					this.ctx.rotate(object.rotation * Math.PI / 180);
+					this.ctx.scale(object.scale.x, object.scale.y);
+					console.log(object)
+					this.ctx.drawImage(
+						object.image, 
+						0,
+						0,
+						object.horizontalStacked ? object.spriteSize : object.image.width,
+						!object.horizontalStacked ? object.spriteSize : object.image.height,
+						-(object.horizontalStacked ? object.spriteSize : object.image.width / 2), 
+						-(!object.horizontalStacked ? object.spriteSize : object.image.height / 2), 
+						object.horizontalStacked ? object.spriteSize : object.image.width, 
+						!object.horizontalStacked ? object.spriteSize : object.image.height
+					)
+					this.ctx.restore();
+					object.AddTime(delta)
 					break
 			}
 		});
@@ -301,7 +326,7 @@ class GameEngine {
 
 		if (this.LoopCall != null) await this.LoopCall(dt)
 		
-		this.#DrawScene();
+		this.#DrawScene(dt);
 
 		setTimeout(() => this.Loop(), 1)
 	}
@@ -407,8 +432,6 @@ class ImageObject extends VisibleObject{
 	constructor({
 		image = new Image(),
 		repeat = false,
-		repeatX = true,
-		repeatY = true,
 		useSourceSize = true,
 		size = null,
 		overrideImgSourceSize = null,
@@ -421,10 +444,53 @@ class ImageObject extends VisibleObject{
 		this.repeat = repeat;
 		this.useSourceSize = useSourceSize;
 		this.size = size;
-		this.repeatX = repeatX;
-		this.repeatY = repeatY;
 		this.overrideImgSourceSize = overrideImgSourceSize;
 		this.overrideImgSourcePosition = overrideImgSourcePosition;
+	}
+}
+
+class ImageAnimObject extends VisibleObject{
+	//TODO
+	constructor({
+		image = new Image(),
+		horizontalStacked = true,
+		spriteSize = Vector2.Zero,
+		currentFrame = 0,
+		isPlaying = false,
+		fps = 24,
+		stopAtEnd = false,
+		reverseAtEnd = false,
+		...GameObjectOptions
+	} = {})
+	{
+		super(GameObjectOptions)
+		this.image = image;
+		this.horizontalStacked = horizontalStacked;
+		this.spriteSize = spriteSize;
+		this.currentFrame = currentFrame;
+		this.isPlaying = isPlaying;
+		this.fps = fps;
+		this.stopAtEnd = stopAtEnd;
+		this.reverseAtEnd = reverseAtEnd;
+		this.timePassed = 0;
+		this.animDirection = 1;
+	}
+
+	SetSpriteSizeBySpriteAmount(amount){
+		if(this.horizontalStacked){
+			this.spriteSize = this.image.width / amount;
+		}
+		else{
+			this.spriteSize = this.image.height / amount;
+		}
+	}
+
+	SetFrame(frame){
+
+	}
+
+	AddTime(delta){
+
 	}
 }
 
