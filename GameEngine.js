@@ -2,7 +2,6 @@
  * TODO
  * Way too many things ;-;
  * Input Handler
- * Object Handler
  * Don't draw objects not currently on screen
  * */
 const BasicSquarePath = new Path2D();
@@ -176,7 +175,7 @@ class GameEngine {
 					break
 				case object instanceof ImageObject:
 					var objScreenPos = this.worldToScreenSpace(object.position)
-					var ImageSize = object.useSourceSize ? new Vector2(object.image.width, object.image.height) : object.size;
+					var ImageSize = object.overrideDisplaySize == null ? new Vector2(object.image.width, object.image.height) : object.overrideDisplaySize;
 					var SourceImagePosition = object.overrideImgSourcePosition == null ? Vector2.Zero : object.overrideImgSourcePosition;
 					var SourceImageSize = object.overrideImgSourceSize == null ? new Vector2(object.image.width, object.image.height) : object.overrideImgSourceSize;
 					this.ctx.save();
@@ -213,23 +212,22 @@ class GameEngine {
 					this.ctx.restore();
 					break
 				case object instanceof ImageAnimObject:
-					//TODO
-					var objScreenPos = this.worldToScreenSpace(object.position)
+					var objScreenPos = this.worldToScreenSpace(object.position);
+					var displaySize = object.overrideDisplaySize == null ? object.spriteSize : object.overrideDisplaySize;
 					this.ctx.save();
 					this.ctx.translate(objScreenPos.x, objScreenPos.y);
 					this.ctx.rotate(object.rotation * Math.PI / 180);
 					this.ctx.scale(object.scale.x, object.scale.y);
-					console.log(object)
 					this.ctx.drawImage(
 						object.image, 
-						0,
-						0,
-						object.horizontalStacked ? object.spriteSize : object.image.width,
-						!object.horizontalStacked ? object.spriteSize : object.image.height,
-						-(object.horizontalStacked ? object.spriteSize : object.image.width / 2), 
-						-(!object.horizontalStacked ? object.spriteSize : object.image.height / 2), 
-						object.horizontalStacked ? object.spriteSize : object.image.width, 
-						!object.horizontalStacked ? object.spriteSize : object.image.height
+						object.spriteSize.x * object.currentFrame.x,
+						object.spriteSize.y * object.currentFrame.y,
+						object.spriteSize.x,
+						object.spriteSize.y,
+						-(displaySize.x / 2), 
+						-(displaySize.y / 2), 
+						displaySize.x, 
+						displaySize.y
 					)
 					this.ctx.restore();
 					object.AddTime(delta)
@@ -382,13 +380,14 @@ class GameEngine {
 
 class GameObject{
 	constructor({
-		position = Vector2.Zero,
+		position = new Vector2(0,0),
 		rotation = 0,
 		scale = new Vector2(1,1),
 		colliderSize = new Vector2(10, 10), 
 		colliderOffset = new Vector2(0, 0),
 		drawCollider = false,
-		name = 'GameObject'
+		name = 'GameObject',
+		tags = []
 	} = {})
 	{
 		this.id = -1;
@@ -399,6 +398,7 @@ class GameObject{
 		this.colliderSize = colliderSize;
 		this.colliderOffset = colliderOffset;
 		this.drawCollider = drawCollider;
+		this.tags = tags;
 	}
 
 	get localUp(){
@@ -454,8 +454,7 @@ class ImageObject extends VisibleObject{
 	constructor({
 		image = new Image(),
 		repeat = false,
-		useSourceSize = true,
-		size = null,
+		overrideDisplaySize = null,
 		overrideImgSourceSize = null,
 		overrideImgSourcePosition = null,
 		...GameObjectOptions
@@ -464,55 +463,129 @@ class ImageObject extends VisibleObject{
 		super(GameObjectOptions)
 		this.image = image;
 		this.repeat = repeat;
-		this.useSourceSize = useSourceSize;
-		this.size = size;
+		this.overrideDisplaySize = overrideDisplaySize;
 		this.overrideImgSourceSize = overrideImgSourceSize;
 		this.overrideImgSourcePosition = overrideImgSourcePosition;
 	}
 }
 
 class ImageAnimObject extends VisibleObject{
-	//TODO
 	constructor({
 		image = new Image(),
 		horizontalStacked = true,
-		spriteSize = Vector2.Zero,
+		spriteColRowCount = new Vector2(0,0),
+		spriteSize = new Vector2(0,0),
+		overrideDisplaySize = null,
+		spriteAmount = 0,
 		currentFrame = 0,
-		isPlaying = false,
 		fps = 24,
 		stopAtEnd = false,
 		reverseAtEnd = false,
+		animDirection = 1,
+		colRowStartOffset = new Vector2(0,0),
 		...GameObjectOptions
 	} = {})
 	{
 		super(GameObjectOptions)
 		this.image = image;
 		this.horizontalStacked = horizontalStacked;
+		this.spriteColRowCount = spriteColRowCount;
+		this.overrideDisplaySize = overrideDisplaySize,
 		this.spriteSize = spriteSize;
+		this.spriteAmount = spriteAmount,
 		this.currentFrame = currentFrame;
-		this.isPlaying = isPlaying;
 		this.fps = fps;
 		this.stopAtEnd = stopAtEnd;
 		this.reverseAtEnd = reverseAtEnd;
+		this.animDirection = animDirection;
+		this.isPlaying = false;
 		this.timePassed = 0;
-		this.animDirection = 1;
+		this.colRowStartOffset = colRowStartOffset;
+		this.totalAnimDuration = 0;
+		this.#calcAnimTime();
+		this.#calcSpriteSize();
 	}
 
-	SetSpriteSizeBySpriteAmount(amount){
-		if(this.horizontalStacked){
-			this.spriteSize = this.image.width / amount;
+	#calcAnimTime(){
+		this.totalAnimDuration = this.spriteAmount / this.fps;
+	}
+
+	SetSpriteDataByColRowCount(ColRowCount, spriteAmount = -1, ColRowStartOffset = new Vector2(0,0)){
+		this.colRowStartOffset = ColRowStartOffset;
+		this.spriteColRowCount = ColRowCount;
+		if(spriteAmount != -1){
+			this.spriteAmount = spriteAmount;
 		}
 		else{
-			this.spriteSize = this.image.height / amount;
+			this.spriteAmount = this.spriteColRowCount.x * this.spriteColRowCount.y;
 		}
+		
+		
+		this.#calcAnimTime();
+		this.#calcSpriteSize();
 	}
 
-	SetFrame(frame){
+	#calcSpriteSize(){
+		this.spriteSize = new Vector2(
+			this.image.width / this.spriteColRowCount.x,
+			this.image.height / this.spriteColRowCount.y
+		);
+	}
 
+	Play(){
+		if (this.timePassed <= 0 || this.timePassed >= this.totalAnimDuration){
+			this.Reset();
+		}
+		this.isPlaying = true;
+	}
+
+	Pause(){
+		this.isPlaying = false;
+	}
+
+	Reset(){
+		if(this.animDirection == -1){
+			this.timePassed = this.totalAnimDuration;
+		}
+		else{
+			this.timePassed = 0;
+		}
+		this.#updateFrame();
+	}
+
+	#updateFrame(){
+		let frameIndex = Math.max(Math.min(
+			Math.ceil(this.timePassed / (this.totalAnimDuration / this.spriteAmount)) - 1,
+			this.spriteAmount - 1
+		), 0);
+
+		let frameX = this.horizontalStacked ? frameIndex % this.spriteColRowCount.x : Math.floor(frameIndex / this.spriteColRowCount.y);
+		frameX += this.colRowStartOffset.x;
+		let frameY = this.horizontalStacked ? Math.floor(frameIndex / this.spriteColRowCount.x) : frameIndex % this.spriteColRowCount.y;
+		frameY += this.colRowStartOffset.y;
+
+		this.currentFrame = new Vector2(frameX, frameY)
 	}
 
 	AddTime(delta){
+		if(!this.isPlaying){return;}
 
+		this.timePassed += delta * this.animDirection;
+
+		if(this.timePassed > this.totalAnimDuration || this.timePassed < 0){
+			if(this.stopAtEnd){
+				this.Pause();
+			}
+			else if(this.reverseAtEnd){
+				this.animDirection = -this.animDirection;
+				this.Reset();
+			}
+			else{
+				this.timePassed += this.totalAnimDuration * -this.animDirection;
+			}
+		}
+
+		this.#updateFrame();
 	}
 }
 
