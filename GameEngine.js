@@ -21,11 +21,33 @@ function GetUUID(){
 	return Math.random().toString(16).slice(2)
 }
 
-function LoadImage(path){
-	let img = new Image();
-	img.src = path;
-	return img;
+class ResourceManager {
+	constructor(){
+		this.cache = new Map();
+	}
+
+	async LoadImage(path){
+		if (this.cache.has(path)){
+			return this.cache.get(path);
+		}
+		let img = new Image();
+		img.src = path;
+		await new Promise(res => {
+			if (img.complete) {
+				return res();
+			}
+			img.onload = () => res();
+			img.onerror = () => res();
+		});
+		this.cache.set(path, img);
+		return img;
+	}
+
+	ClearCache(){
+		this.cache.clear();
+	}
 }
+const resManager = new ResourceManager();
 
 //function LoadSpriteSheet(path){
 //	let img = new Image();
