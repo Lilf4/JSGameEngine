@@ -70,20 +70,20 @@ class GameEngine {
 		this.screenSize = Size;
 		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"});
 
-		this.KeyDownEventHandler = this.KeyDownEventHandler.bind(this);
-		this.KeyUpEventHandler = this.KeyUpEventHandler.bind(this);
-		addEventListener("keydown", this.KeyDownEventHandler);
-		addEventListener("keyup", this.KeyUpEventHandler);
+		this.KeyDownEventHandler = this.#KeyDownEventHandler.bind(this);
+		this.KeyUpEventHandler = this.#KeyUpEventHandler.bind(this);
+		addEventListener("keydown", this.#KeyDownEventHandler);
+		addEventListener("keyup", this.#KeyUpEventHandler);
 	}
 
-	KeyDownEventHandler(event){
+	#KeyDownEventHandler(event){
 		event.preventDefault();
 		if(!(event.key in this.KeysDown)){
 			this.KeysDown[event.key] = { }
 		}
 	}
 
-	KeyUpEventHandler(event){
+	#KeyUpEventHandler(event){
 		event.preventDefault();
 		if(event.key in this.KeysDown){
 			this.KeysPressed[event.key] = { pressed: performance.now() };
@@ -97,6 +97,11 @@ class GameEngine {
 		}
 	}
 
+	/**
+	 * Checks whether key has **just** been let go
+	 * @param {string} key string representation of key to check
+	 * @returns {boolean} **True** if key has just been let go, else returns **False**
+	 */
 	IsKeyPressed(key){
 		if (key in this.KeysPressed && performance.now() - this.KeysPressed[key].pressed <= this.ClickLimit){
 			delete this.KeysPressed[key];
@@ -105,6 +110,11 @@ class GameEngine {
 		return false;
 	}
 
+	/**
+	 * Checks whether key is currently being held down
+	 * @param {string} key string representation of key to check
+	 * @returns {boolean} **True** if key is currently held down, else returns **False**
+	 */
 	IsKeyDown(key){
 		return (key in this.KeysDown);
 	}
@@ -236,24 +246,37 @@ class GameEngine {
 		});
 	}
 
+	/**
+	 * Adds a GameObject to the engine.
+	 * Ensures the object is an instance of GameObject (or a subclass of it) and gives it a unique ID.
+	 * @param {GameObject} object - The GameObject instance to add to the engine.
+	 * @throws {Error} If the object is not an instance of GameObject or its subclass.
+	 */
 	AddObject(object){
+		if (!(object instanceof GameObject)) {
+			throw new Error(`The object must be an instance of GameObject or a subclass of it, but received: ${object}`);
+		}
 		let uuid = -1;
 		do{
 			uuid = GetUUID();
 		} while(uuid in this.GameObjectDict);
 		object.id = uuid
 		this.GameObjectDict[uuid] = object
-		this.CreateObjectRenderOrderList()
+		this.#CreateObjectRenderOrderList()
 	}
 
+	/**
+	 * Removes a GameObject from the engine.
+	 * @param {GameObject} object - The GameObject instance to add to remove.
+	 */
 	RemObject(object){
 		if(object.id in this.GameObjectDict){
 			delete this.GameObjectDict[object.id]
 		}
-		this.CreateObjectRenderOrderList();
+		this.#CreateObjectRenderOrderList();
 	}
 	
-	CreateObjectRenderOrderList(){
+	#CreateObjectRenderOrderList(){
 		this.GameObjectList = [];
 		this.GameObjectList = Object.values(this.GameObjectDict).sort((a, b) => b.layer - a.layer);
 	}
