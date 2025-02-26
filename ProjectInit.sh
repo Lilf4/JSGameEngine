@@ -18,14 +18,15 @@ while [ $# -gt 0 ]; do
       template="${1#*=}"
       ;;
     -\?|--help)
-        printf "+----------------------------------------+\n"
-        printf "| ProjectInit arguments:                 |\n"
-        printf "+----------------------------------------+\n"
-        printf "| short | long        | Description      |\n"
-        printf "+----------------------------------------+\n"
-        printf "| -n=   | --name=     | pre-set name     |\n"
-        printf "| -t=   | --template= | pre-set template |\n"
-        printf "+----------------------------------------+\n"
+        printf "+--------------------------------------------+\n"
+        printf "| ProjectInit arguments:                     |\n"
+        printf "+--------------------------------------------+\n"
+        printf "| short | long        | Description          |\n"
+        printf "+--------------------------------------------+\n"
+        printf "| -n=   | --name=     | pre-set name         |\n"
+        printf "| -t=   | --template= | pre-set template     |\n"
+        printf "| -t    | --help      | display this message |\n"
+        printf "+--------------------------------------------+\n"
         exit 0
       ;;
     *)
@@ -86,24 +87,34 @@ if [ ! -d "Templates/$template" ]; then
 	ErrorFn
 fi
 
+printf "\nCopying template files...\n"
 cp -a "Templates/$template" "Projects/$name"
 
-if [ -f "Projects/$name/TEMPLATE_CONFIG" ]; then
-	printf "found template file.\n"
+templateName=".template.config"
+shouldDelete=0
+if [ -f "Projects/$name/$templateName" ]; then
+	printf "\nFound template file.\n"
 	while IFS="" read -r p || [ -n "$p" ]
 	do
 		val="${p#*=}"
 		case "$p" in
 		EnginePath=*)
-			printf "%s\n" $val
+			printf "Copying game engine to: Projects/%s/%s\n" $name $val
 			cp "GameEngine.js" "Projects/$name/$val"
+		;;
+		DeleteOnInit=*)
+			shouldDelete=$val
 		;;
 		*)
 		printf "Invalid argument: \"$p\"\n"
 		exit 1
 		esac
-	done < "Projects/$name/TEMPLATE_CONFIG"
+	done < "Projects/$name/$templateName"
 
-	rm -f "Projects/$name/TEMPLATE_CONFIG"
+	if [ "$shouldDelete" -eq 1 ]; then
+		printf "Deleting template config from project folder\n"
+		rm -f "Projects/$name/$templateName"
+	fi
 fi
 
+printf "\nProject %s created successfully.\n" $name
