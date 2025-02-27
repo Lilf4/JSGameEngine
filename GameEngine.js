@@ -16,6 +16,10 @@ BasicTrianglePath.lineTo(-5, 5);
 BasicTrianglePath.lineTo(5, 5);
 BasicTrianglePath.closePath();
 
+/**
+ * Generates a random UUID
+ * @returns {string}
+ */
 function GetUUID(){
 	return Math.random().toString(16).slice(2)
 }
@@ -76,6 +80,10 @@ class GameEngine {
 		addEventListener("keyup", this.#KeyUpEventHandler);
 	}
 
+	/**
+	 * Handles key down events
+	 * @param {KeyboardEvent} event string representation of key to check
+	 */
 	#KeyDownEventHandler(event){
 		event.preventDefault();
 		if(!(event.key in this.KeysDown)){
@@ -83,6 +91,10 @@ class GameEngine {
 		}
 	}
 
+	/**
+	 * Handles key up events
+	 * @param {KeyboardEvent} event string representation of key to check
+	 */
 	#KeyUpEventHandler(event){
 		event.preventDefault();
 		if(event.key in this.KeysDown){
@@ -118,7 +130,11 @@ class GameEngine {
 	IsKeyDown(key){
 		return (key in this.KeysDown);
 	}
-
+	
+	/**
+	 * Renderes current game frame
+	 * @param {Number} delta - time since last frame
+	 */
 	#DrawScene(delta){
 		this.ctx.fillStyle = this.background
 		this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
@@ -275,12 +291,20 @@ class GameEngine {
 		}
 		this.#CreateObjectRenderOrderList();
 	}
-	
+
+	/**
+	 * Recreates internal layer ordered list of objects to be drawn
+	 */
 	#CreateObjectRenderOrderList(){
 		this.GameObjectList = [];
 		this.GameObjectList = Object.values(this.GameObjectDict).sort((a, b) => b.layer - a.layer);
 	}
 
+	/**
+	 * Gets all objects that collides with object
+	 * @param {GameObject} object - The GameObject instance to check collision for.
+	 * @return {GameObject[]} List of GameObject's that collide with provided object
+	 */
 	GetCollidingObjects(object){
 		let collidingObjects = []
 		let colliderPosition = object.movedColliderPosition;
@@ -355,13 +379,19 @@ class GameEngine {
 		return true; // If no gaps, collision detected
 	}	
 
+	/**
+	 * Starts engine logic
+	 */
 	async Start(){
 		this.running = true;
 		if (this.InitCall != null) await this.InitCall()
-		this.Loop()
+		this.#Loop()
 	}
 
-	async Loop(){
+	/**
+	 * Engine main loop
+	 */
+	async #Loop(){
 		if (!this.running) return;
 		const now = performance.now();
 		let dt = (now - this.lastFrameTime) / 1000;
@@ -371,21 +401,37 @@ class GameEngine {
 		
 		this.#DrawScene(dt);
 
-		setTimeout(() => this.Loop(), 1)
+		setTimeout(() => this.#Loop(), 1)
 	}
 
+	/**
+	 * Stops engine logic when frame is finished processing
+	 */
 	Stop(){
 		this.running = false;
 	}
 
+	/**
+	 * Sets loop callback function, which gets called once every frame before draw call
+	 * @param {CallableFunction} call
+	 */
 	SetLoopFunction(call){
 		this.LoopCall = call
 	}
 
+	/**
+	 * Sets initialize callback function, which gets called once before engine fully starts
+	 * @param {CallableFunction} call
+	 */
 	SetInitFunction(call){
 		this.InitCall = call
 	}
 
+	/**
+	 * Converts a world position to a screen position
+	 * @param {Vector2} pos - World position
+	 * @returns {Vector2} Screen position
+	 */
 	worldToScreenSpace(pos){
 		var relativePos = Vector2.sub(pos, this.CameraObject.position);
 		relativePos.y *= -1;
@@ -393,6 +439,11 @@ class GameEngine {
 		return relativePos
 	}
 
+	/**
+	 * Converts a screen position to a world position
+	 * @param {Vector2} pos - Screen position
+	 * @returns {Vector2} World position
+	 */
 	screenToWorldSpace(pos){
 		var relativePos = Vector2.sub(pos, Vector2.div(this.screenSize, 2));
 		relativePos = Vector2.add(relativePos, this.CameraObject.position);
@@ -424,20 +475,36 @@ class GameObject{
 		this.tags = tags;
 	}
 
+	/**
+	 * Gets the current up vector based on the current object rotation
+	 * @returns {Vector2} Up vector
+	 */
 	get localUp(){
 		let radians = (this.rotation - 90) * (Math.PI / 180);
 		return new Vector2(Math.cos(radians), Math.sin(-radians));
 	}
 
+	/**
+	 * Gets the current right vector based on the current object rotation
+	 * @returns {Vector2} Right vector
+	 */
 	get localRight(){
 		let radians = this.rotation * (Math.PI / 180);
 		return new Vector2(Math.cos(radians), Math.sin(-radians));
 	}
 
+	/**
+	 * Gets the position of object collider after applying rotation and offset
+	 * @returns {Vector2} Collider position
+	 */
 	get movedColliderPosition(){
 		return this.position.add(this.localUp.mult(this.colliderOffset.y)).add(this.localRight.mult(this.colliderOffset.x));
 	}
 
+	/**
+	 * Gets the collider size after applying scale
+	 * @returns {Vector2} Collider size
+	 */
 	get scaledColliderSize(){
 		return new Vector2(this.colliderSize.x * this.scale.x, this.colliderSize.y * this.scale.y);
 	}
@@ -521,33 +588,44 @@ class ImageAnimObject extends VisibleObject{
 		this.stopAtEnd = stopAtEnd;
 		this.reverseAtEnd = reverseAtEnd;
 		this.animDirection = animDirection;
+		this.colRowStartOffset = colRowStartOffset;
 		this.isPlaying = false;
 		this.timePassed = 0;
-		this.colRowStartOffset = colRowStartOffset;
 		this.totalAnimDuration = 0;
 		this.#calcAnimTime();
 		this.#calcSpriteSize();
 	}
 
+	/**
+	 * Calculates the total duration of animation
+	 */
 	#calcAnimTime(){
 		this.totalAnimDuration = this.spriteAmount / this.fps;
 	}
 
-	SetSpriteDataByColRowCount(ColRowCount, spriteAmount = -1, ColRowStartOffset = new Vector2(0,0)){
+	/**
+	 * Sets necessary sprite/animation data by using given Coloumn and Row count
+	 * @param {Vector2} ColRowCount - Column and Row count
+	 * @param {Number} SpriteAmount - Amount of sprites in animation
+	 * @param {Vector2} ColRowStartOffset - Column and Row offset for animation start position in spritesheet
+	 */
+	SetSpriteDataByColRowCount(ColRowCount, SpriteAmount = -1, ColRowStartOffset = new Vector2(0,0)){
 		this.colRowStartOffset = ColRowStartOffset;
 		this.spriteColRowCount = ColRowCount;
-		if(spriteAmount != -1){
-			this.spriteAmount = spriteAmount;
+		if(SpriteAmount != -1){
+			this.spriteAmount = SpriteAmount;
 		}
 		else{
-			this.spriteAmount = this.spriteColRowCount.x * this.spriteColRowCount.y;
+			this.SpriteAmount = this.spriteColRowCount.x * this.spriteColRowCount.y;
 		}
-		
 		
 		this.#calcAnimTime();
 		this.#calcSpriteSize();
 	}
 
+	/**
+	 * Calculates sprite size based on the coloum and row counts
+	 */
 	#calcSpriteSize(){
 		this.spriteSize = new Vector2(
 			this.image.width / this.spriteColRowCount.x,
@@ -555,17 +633,26 @@ class ImageAnimObject extends VisibleObject{
 		);
 	}
 
+	/**
+	 * Sets *isPlaying* flag to true allowing animation to be played, aswell as resetting animation time if it's finished playing
+	 */
 	Play(){
-		if (this.timePassed <= 0 || this.timePassed >= this.totalAnimDuration){
+		if (!this.isPlaying && (this.timePassed <= 0 || this.timePassed >= this.totalAnimDuration)){
 			this.Reset();
 		}
 		this.isPlaying = true;
 	}
 
+	/**
+	 * Sets *isPlaying* flag to false stopping animation from being played
+	 */
 	Pause(){
 		this.isPlaying = false;
 	}
 
+	/**
+	 * Resets animation time based on animation direction
+	 */
 	Reset(){
 		if(this.animDirection == -1){
 			this.timePassed = this.totalAnimDuration;
@@ -576,6 +663,9 @@ class ImageAnimObject extends VisibleObject{
 		this.#updateFrame();
 	}
 
+	/**
+	 * Sets *currentFrame* based on animation time
+	 */
 	#updateFrame(){
 		let frameIndex = Math.max(Math.min(
 			Math.ceil(this.timePassed / (this.totalAnimDuration / this.spriteAmount)) - 1,
@@ -590,6 +680,10 @@ class ImageAnimObject extends VisibleObject{
 		this.currentFrame = new Vector2(frameX, frameY)
 	}
 
+	/**
+	 * Tries to add time to animation time if allowed, applies end of animation rules if set and calls #updateFrame
+	 * @param {Number} delta - time to add
+	 */
 	AddTime(delta){
 		if(!this.isPlaying){return;}
 
@@ -648,44 +742,107 @@ class Vector2{
 		this.y = y;
 	}
 
+	/**
+	 * Adds vector **a** to vector **b**
+	 * @param {Vector2} a
+	 * @param {Vector2} b
+	 * @returns {Vector2}
+	 */
 	static add(a, b)
 	{
 		return new Vector2(a.x + b.x, a.y + b.y);
 	}
+	/**
+	 * Adds vector **b** to current vector
+	 * @param {Vector2} b
+	 * @returns {Vector2}
+	 */
 	add(b)
 	{
 		return new Vector2(this.x + b.x, this.y + b.y);
 	}
+
+	/**
+	 * Subtracts vector **b** from vector **a**
+	 * @param {Vector2} a
+	 * @param {Vector2} b
+	 * @returns {Vector2}
+	 */
 	static sub(a, b)
 	{
 		return new Vector2(a.x - b.x, a.y - b.y);
 	}
+	/**
+	 * Subtracts vector **b** from current vector
+	 * @param {Vector2} b
+	 * @returns {Vector2}
+	 */
 	sub(b)
 	{
 		return new Vector2(this.x - b.x, this.y - b.y);
 	}
+
+	/**
+	 * Multiplies vector **a** with vector **b**
+	 * @param {Vector2} a
+	 * @param {Vector2} b
+	 * @returns {Vector2}
+	 */
 	static mult(a, x)
 	{
 		return new Vector2(a.x * x, a.y * x);
 	}
+	/**
+	 * Multiplies current vector with vector **b** 
+	 * @param {Vector2} b
+	 * @returns {Vector2}
+	 */
 	mult(x)
 	{
 		return new Vector2(this.x * x, this.y * x);
 	}
+
+	/**
+	 * Divides vector **a** with vector **b**
+	 * @param {Vector2} a
+	 * @param {Vector2} b
+	 * @returns {Vector2}
+	 */
 	static div(a, x)
 	{
 		return new Vector2(a.x / x, a.y / x);
 	}
+	/**
+	 * Divides current vector with vector **b**
+	 * @param {Vector2} b
+	 * @returns {Vector2}
+	 */
 	div(x)
 	{
 		return new Vector2(this.x / x, this.y / x);
 	}
+
+	/**
+	 * Calculates the magnitude of vector **a**
+	 * @param {Vector2} a
+	 * @returns {Vector2}
+	 */
 	static magnitude(a){
 		return Math.sqrt(a.x * a.x + a.y * a.y);
 	}
+	/**
+	 * Calculates the magnitude of current vector
+	 * @returns {Vector2}
+	 */
 	magnitude(){
 		return Math.sqrt(this.x * this.x + this.y * this.y);
 	}
+
+	/**
+	 * Calculates the normal of vector **a**
+	 * @param {Vector2} a
+	 * @returns {Vector2}
+	 */
 	static normalize(a){
 		let mag = Vector2.magnitude(a);
 		if (mag === 0){
@@ -693,6 +850,10 @@ class Vector2{
 		}
 		return new Vector2(a.x / mag, a.y / mag);
 	}
+	/**
+	 * Calculates the normal of current vector
+	 * @returns {Vector2}
+	 */
 	normalize(){
 		let mag = Vector2.magnitude(this);
 		if (mag === 0){
@@ -700,9 +861,19 @@ class Vector2{
 		}
 		return new Vector2(this.x / mag, this.y / mag);
 	}
+
+	/**
+	 * Calculates the dot product of vector **a**
+	 * @param {Vector2} a
+	 * @returns {Vector2}
+	 */
 	static dot(a, b){
 		return a.x * b.x + a.y * b.y
 	}
+	/**
+	 * Calculates the dot product of current vector
+	 * @returns {Vector2}
+	 */
 	dot(b){
 		return this.x * b.x + this.y * b.y
 	}
