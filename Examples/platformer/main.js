@@ -5,6 +5,8 @@ Engine = new GameEngine(
 
 Engine.AddObject(playerChar)
 
+const gravity = 8
+
 // Objects above ^
 Engine.SetInitFunction(INIT);
 Engine.SetLoopFunction(GAMELOGIC);
@@ -13,16 +15,30 @@ Engine.Start();
 async function INIT(){
 	setAnimation(playerSheets.idle);
 	playerChar.Play();
+	playerChar.is_on_floor = true
 }
 
 async function GAMELOGIC(delta){
-	if (!UserInput()) {
+	if (!playerChar.is_on_floor) {
+		playerChar.velocityY -= gravity * delta
+	}
+	else if (playerChar.is_on_floor && playerChar.state != "jumping") {
+		playerChar.velocityY = 0
+		playerChar.state = "idle"
+	}
+
+	if (!UserInput(delta)) {
 		if (playerChar.state != "jumping" || playerChar.is_on_floor) {
 			playerChar.state = "idle"
 			setAnimation(playerSheets.idle) 
 		}
 	}
-
+	playerChar.position.y += playerChar.velocityY
+	spriteY = 200-playerChar.spriteSize.y/2
+	if (playerChar.position.y <= -spriteY) { 
+		playerChar.is_on_floor = true 
+		playerChar.position.y = -spriteY
+	}
 }
 
 

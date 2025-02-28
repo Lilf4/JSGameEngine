@@ -1,15 +1,16 @@
 //#region PlayerCharacter
 // Player object with custom attributes
 let playerChar = new ImageAnimObject({
-    position		: new Vector2(0, 0),
+    position		: new Vector2(0, -185),
 	fps				: 24,
 	animDirection	: 1,
 	state			: ["idle", "moving", "jumping"],
-	is_on_floor		: true
+	is_on_floor		: true,
+	velocityY		: 0
 });
 
 // Player speed
-let move_speed = 2.0
+let move_speed = 120.0
 
 // Animation sheets for the players various animations
 playerSheets = {
@@ -25,16 +26,17 @@ async function setAnimation(anim){
 	playerChar.fps = anim[2]
 }
 
-function moveCharacter(character, speed = 0.5){
-	character.position.x += speed / 4
+function moveCharacter(character, speed = 100, delta){
+	character.position.x += speed * delta
 }
 
 // Inputs from the player
-function UserInput(){
-	if (Engine.IsKeyPressed(' ')) {
+function UserInput(delta){
+	if (Engine.IsKeyDown(' ') && playerChar.velocityY == 0) {
 		if (playerChar.is_on_floor == false) return;
 		playerChar.state = "jumping"
 		playerChar.is_on_floor = false
+		playerChar.velocityY += 2
 		setAnimation(playerSheets.jump)
 	}
 	else if (Engine.IsKeyPressed('v')) {
@@ -42,7 +44,7 @@ function UserInput(){
 	}
 	else if (Engine.IsKeyDown('d')){
 		playerChar.scale.x = 1;
-		moveCharacter(playerChar, move_speed);
+		moveCharacter(playerChar, move_speed, delta);
 		if (playerChar.is_on_floor == false) return true;		
 		playerChar.state = "moving"
 		setAnimation(playerSheets.run)
@@ -50,7 +52,7 @@ function UserInput(){
 	}
 	else if (Engine.IsKeyDown('a')){
 		playerChar.scale.x = -1
-		moveCharacter(playerChar, -move_speed);
+		moveCharacter(playerChar, -move_speed, delta);
 		if (playerChar.is_on_floor == false) return true;		
 		playerChar.state = "moving"
 		setAnimation(playerSheets.run)
