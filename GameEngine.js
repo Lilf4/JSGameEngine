@@ -28,7 +28,11 @@ class ResourceManager {
 	constructor(){
 		this.cache = new Map();
 	}
-
+	/**
+	* Loads an image and saves it to cache
+	* @param {String} path - Image path/url
+	* @returns {Image} Loaded image
+	*/
 	async LoadImage(path){
 		if (this.cache.has(path)){
 			return this.cache.get(path);
@@ -45,18 +49,14 @@ class ResourceManager {
 		this.cache.set(path, img);
 		return img;
 	}
-
+	/**
+	 * Clears cache
+	 */
 	ClearCache(){
 		this.cache.clear();
 	}
 }
 const resManager = new ResourceManager();
-
-//function LoadSpriteSheet(path){
-//	let img = new Image();
-//	img.src = path;
-//	return img;
-//}
 
 class GameEngine {
 	background = 'black';
