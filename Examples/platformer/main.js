@@ -33,7 +33,14 @@ async function GAMELOGIC(delta){
 			setAnimation(playerSheets.idle) 
 		}
 	}
-	playerChar.position.y += playerChar.velocityY
+	
+	if (playerChar.velocityY < 0) {
+		playerChar.position.y += playerChar.velocityY * 2
+		setAnimation(playerSheets.fall)
+	}
+	else { playerChar.position.y += playerChar.velocityY }
+
+
 	spriteY = 200-playerChar.spriteSize.y/2
 	if (playerChar.position.y <= -spriteY) { 
 		playerChar.is_on_floor = true 

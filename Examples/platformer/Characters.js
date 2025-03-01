@@ -11,6 +11,7 @@ let playerChar = new ImageAnimObject({
 
 // Player speed
 let move_speed = 120.0
+let jump_force = 4
 
 // Animation sheets for the players various animations
 playerSheets = {
@@ -36,7 +37,7 @@ function UserInput(delta){
 		if (playerChar.is_on_floor == false) return;
 		playerChar.state = "jumping"
 		playerChar.is_on_floor = false
-		playerChar.velocityY += 2
+		playerChar.velocityY += jump_force
 		setAnimation(playerSheets.jump)
 	}
 	else if (Engine.IsKeyPressed('v')) {
