@@ -13,6 +13,7 @@ Engine.SetLoopFunction(GAMELOGIC);
 Engine.Start();
 
 async function INIT(){
+	CreateLeveL();
 	setAnimation(playerSheets.idle);
 	playerChar.Play();
 	playerChar.is_on_floor = true
@@ -23,8 +24,8 @@ async function GAMELOGIC(delta){
 		playerChar.velocityY -= gravity * delta
 	}
 	else if (playerChar.is_on_floor && playerChar.state != "jumping") {
-		playerChar.velocityY = 0
-		playerChar.state = "idle"
+		playerChar.velocityY 	= 0
+		playerChar.state 		= "idle"
 	}
 
 	if (!UserInput(delta)) {
@@ -37,14 +38,12 @@ async function GAMELOGIC(delta){
 	if (playerChar.velocityY < 0) {
 		playerChar.position.y += playerChar.velocityY * 2
 		setAnimation(playerSheets.fall)
-	}
-	else { playerChar.position.y += playerChar.velocityY }
-
+	} else { playerChar.position.y += playerChar.velocityY }
 
 	spriteY = 200-playerChar.spriteSize.y/2
 	if (playerChar.position.y <= -spriteY) { 
-		playerChar.is_on_floor = true 
-		playerChar.position.y = -spriteY
+		playerChar.is_on_floor 	= true 
+		playerChar.position.y 	= -spriteY
 	}
 }
 
