@@ -11,7 +11,7 @@ let playerChar = new ImageAnimObject({
 
 // Player speed
 let move_speed = 120.0
-let jump_force = 4
+let jump_force = 2
 
 // Animation sheets for the players various animations
 playerSheets = {

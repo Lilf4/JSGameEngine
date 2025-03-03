@@ -4,6 +4,7 @@ Engine = new GameEngine(
 );
 
 Engine.AddObject(playerChar)
+Engine.AddObject(block)
 
 const gravity = 8
 
@@ -13,8 +14,9 @@ Engine.SetLoopFunction(GAMELOGIC);
 Engine.Start();
 
 async function INIT(){
-	CreateLeveL();
+	// CreateLeveL();
 	setAnimation(playerSheets.idle);
+	// setImage('Resources/Block.png');
 	playerChar.Play();
 	playerChar.is_on_floor = true
 }
