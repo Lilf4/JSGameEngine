@@ -28,6 +28,7 @@ class ResourceManager {
 	constructor(){
 		this.cache = new Map();
 	}
+	
 	/**
 	* Loads an image and saves it to cache
 	* @param {String} path - Image path/url
@@ -49,8 +50,9 @@ class ResourceManager {
 		this.cache.set(path, img);
 		return img;
 	}
+
 	/**
-	 * Clears cache
+	 * Clears cache of resource manager
 	 */
 	ClearCache(){
 		this.cache.clear();
@@ -58,6 +60,9 @@ class ResourceManager {
 }
 const resManager = new ResourceManager();
 
+/**
+ * Handles game objects, input, rendering, and game loop.
+ */
 class GameEngine {
 	background = 'black';
 	lastFrameTime = performance.now();
@@ -66,6 +71,12 @@ class GameEngine {
 	KeysDown = {}
 	KeysPressed = {}
 	ClickLimit = 200;
+
+	/**
+	 * Creates an instance of the GameEngine.
+	 * @param {HTMLCanvasElement} Canvas - The canvas element used for rendering the game.
+	 * @param {Vector2} [Size=new Vector2(500, 500)] - The size of the game screen.
+	 */
 	constructor(Canvas, Size = new Vector2(500, 500)){
 		this.canvas = Canvas;
 		this.ctx = this.canvas.getContext('2d');
@@ -74,17 +85,19 @@ class GameEngine {
 		this.screenSize = Size;
 		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"});
 
-		this.KeyDownEventHandler = this.#KeyDownEventHandler.bind(this);
-		this.KeyUpEventHandler = this.#KeyUpEventHandler.bind(this);
-		addEventListener("keydown", this.#KeyDownEventHandler);
-		addEventListener("keyup", this.#KeyUpEventHandler);
+		this.KeyDownEventHandler = this.KeyDownEventHandler.bind(this);
+		this.KeyUpEventHandler = this.KeyUpEventHandler.bind(this);
+		addEventListener("keydown", this.KeyDownEventHandler);
+		addEventListener("keyup", this.KeyUpEventHandler);
 	}
 
 	/**
 	 * Handles key down events
 	 * @param {KeyboardEvent} event string representation of key to check
 	 */
-	#KeyDownEventHandler(event){
+	KeyDownEventHandler(event){
+		console.log(event.key);
+		console.log(this.KeysDown);
 		event.preventDefault();
 		if(!(event.key in this.KeysDown)){
 			this.KeysDown[event.key] = { }
@@ -95,7 +108,7 @@ class GameEngine {
 	 * Handles key up events
 	 * @param {KeyboardEvent} event string representation of key to check
 	 */
-	#KeyUpEventHandler(event){
+	KeyUpEventHandler(event){
 		event.preventDefault();
 		if(event.key in this.KeysDown){
 			this.KeysPressed[event.key] = { pressed: performance.now() };
@@ -140,124 +153,31 @@ class GameEngine {
 		this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
 		this.GameObjectList.forEach(object => {
 			if (!(object instanceof VisibleObject) || !object.visible) {return;}
-			switch(true){
-				case object instanceof CustomShapeObject:
-					var objScreenPos = this.worldToScreenSpace(object.position);
-					this.ctx.save();
-					this.ctx.translate(objScreenPos.x, objScreenPos.y);
-					this.ctx.rotate(object.rotation * Math.PI / 180);
-					this.ctx.scale(object.scale.x, object.scale.y);
-					if(object.drawAsOutline){
-						this.ctx.strokeStyle = object.color;
-						this.ctx.lineWidth = object.outlineThickness;
-						this.ctx.stroke(object.shape);
-					}
-					else{
-						this.ctx.fillStyle = object.color;
-						this.ctx.fill(object.shape);
-					}
-					this.ctx.restore();
-					if (object.drawCollider){
-						let colliderPos = this.worldToScreenSpace(object.movedColliderPosition)
-						this.ctx.save();
-						this.ctx.translate(colliderPos.x, colliderPos.y);
-						this.ctx.rotate(object.rotation * Math.PI / 180);
-						this.ctx.scale(object.scale.x, object.scale.y);
-						this.ctx.beginPath();
-						this.ctx.strokeStyle = 'red';
-						this.ctx.lineWidth = 1;
-						this.ctx.rect(-(object.colliderSize.x / 2), -(object.colliderSize.y / 2), object.colliderSize.x, object.colliderSize.y)
-						this.ctx.closePath();
-						this.ctx.stroke();
-						this.ctx.restore();
-					}
-					break;
-				case object instanceof TextObject:
-					var objScreenPos = this.worldToScreenSpace(object.position)
-					this.ctx.save();
-					this.ctx.translate(objScreenPos.x, objScreenPos.y);
-					this.ctx.rotate(object.rotation * Math.PI / 180);
-					this.ctx.scale(object.scale.x, object.scale.y);
-					this.ctx.font = object.font;
-					this.ctx.textAlign = object.alignment;
-					let y = 0;
-					let lines = object.text.split("\n");
-					if(object.drawAsOutline){
-						this.ctx.strokeStyle = object.color;
-						this.ctx.lineWidth = object.outlineThickness;
-						lines.forEach(line => {
-							this.ctx.strokeText(line, 0, y);
-							y += object.lineHeight;
-						});
-					}
-					else{
-						this.ctx.fillStyle = object.color;
-						lines.forEach(line => {
-							this.ctx.fillText(line, 0, y);
-							y += object.lineHeight;
-						});
-					}
-					this.ctx.restore();
-					break
-				case object instanceof ImageObject:
-					var objScreenPos = this.worldToScreenSpace(object.position)
-					var ImageSize = object.overrideDisplaySize == null ? new Vector2(object.image.width, object.image.height) : object.overrideDisplaySize;
-					var SourceImagePosition = object.overrideImgSourcePosition == null ? Vector2.Zero : object.overrideImgSourcePosition;
-					var SourceImageSize = object.overrideImgSourceSize == null ? new Vector2(object.image.width, object.image.height) : object.overrideImgSourceSize;
-					this.ctx.save();
-					this.ctx.translate(objScreenPos.x, objScreenPos.y);
-					this.ctx.rotate(object.rotation * Math.PI / 180);
-					this.ctx.scale(object.scale.x, object.scale.y);
-					if (!object.repeat){
-						this.ctx.drawImage(
-							object.image, 
-							SourceImagePosition.x,
-							SourceImagePosition.y,
-							SourceImageSize.x,
-							SourceImageSize.y,
-							-(ImageSize.x / 2), 
-							-(ImageSize.y / 2), 
-							ImageSize.x, 
-							ImageSize.y
-						)
-					}
-					else{
-						let repeatMode = 'repeat';
-						let patternTransform = this.ctx.getTransform();
 
-						patternTransform.e = -(ImageSize.x / 2);
-						patternTransform.f = -(ImageSize.y / 2);
+			var objScreenPos = this.worldToScreenSpace(object.position);
 
-						let imgPattern = this.ctx.createPattern(object.image, repeatMode);
-						this.ctx.fillStyle = imgPattern;
-						if(imgPattern != null){
-							imgPattern.setTransform(patternTransform);
-							this.ctx.fillRect(-(ImageSize.x / 2), -(ImageSize.y / 2), ImageSize.x, ImageSize.y)
-						}
-					}
-					this.ctx.restore();
-					break
-				case object instanceof ImageAnimObject:
-					var objScreenPos = this.worldToScreenSpace(object.position);
-					var displaySize = object.overrideDisplaySize == null ? object.spriteSize : object.overrideDisplaySize;
-					this.ctx.save();
-					this.ctx.translate(objScreenPos.x, objScreenPos.y);
-					this.ctx.rotate(object.rotation * Math.PI / 180);
-					this.ctx.scale(object.scale.x, object.scale.y);
-					this.ctx.drawImage(
-						object.image, 
-						object.spriteSize.x * object.currentFrame.x,
-						object.spriteSize.y * object.currentFrame.y,
-						object.spriteSize.x,
-						object.spriteSize.y,
-						-(displaySize.x / 2), 
-						-(displaySize.y / 2), 
-						displaySize.x, 
-						displaySize.y
-					)
-					this.ctx.restore();
-					object.AddTime(delta)
-					break
+			this.ctx.save();
+			this.ctx.translate(objScreenPos.x, objScreenPos.y);
+			this.ctx.rotate(object.rotation * Math.PI / 180);
+			this.ctx.scale(object.scale.x, object.scale.y);
+
+			object.draw(delta, this.ctx);
+
+			this.ctx.restore();
+
+			if (object.drawCollider){
+				let colliderPos = this.worldToScreenSpace(object.movedColliderPosition)
+				this.ctx.save();
+				this.ctx.translate(colliderPos.x, colliderPos.y);
+				this.ctx.rotate(object.rotation * Math.PI / 180);
+				this.ctx.scale(object.scale.x, object.scale.y);
+				this.ctx.beginPath();
+				this.ctx.strokeStyle = 'red';
+				this.ctx.lineWidth = 1;
+				this.ctx.rect(-(object.colliderSize.x / 2), -(object.colliderSize.y / 2), object.colliderSize.x, object.colliderSize.y)
+				this.ctx.closePath();
+				this.ctx.stroke();
+				this.ctx.restore();
 			}
 		});
 	}
@@ -452,7 +372,29 @@ class GameEngine {
 	}
 }
 
+/**
+ * The base class for all game objects in the scene.
+ * 
+ * A `GameObject` represents an entity with a position, rotation, scale, 
+ * and optional collision properties. It serves as the foundation for 
+ * other more complex game objects by providing essential transformation 
+ * and collision-handling features.
+ * 
+ * This class is designed to be extended by other object types.
+ */
 class GameObject{
+	/**
+	 * Represents a basic game object with position, rotation, scale, and collision properties.
+	 * @param {Object} options - Configuration options for the game object.
+	 * @param {Vector2} [options.position=new Vector2(0,0)] - The position of the object.
+	 * @param {number} [options.rotation=0] - The rotation angle of the object in degrees.
+	 * @param {Vector2} [options.scale=new Vector2(1,1)] - The scale of the object.
+	 * @param {Vector2} [options.colliderSize=new Vector2(10, 10)] - The size of the collider.
+	 * @param {Vector2} [options.colliderOffset=new Vector2(0, 0)] - The offset of the collider relative to position.
+	 * @param {boolean} [options.drawCollider=false] - Whether to visually draw the collider for debugging.
+	 * @param {string} [options.name='GameObject'] - The name of the game object.
+	 * @param {string[]} [options.tags=[]] - An array of tags for categorization or filtering.
+	 */
 	constructor({
 		position = new Vector2(0,0),
 		rotation = 0,
@@ -510,7 +452,20 @@ class GameObject{
 	}
 }
 
+/**
+ * @extends GameObject
+ * A game object that can be rendered on-screen.
+ * Inherits from `GameObject` and introduces visibility and layering.
+ * Other renderable objects, such as images, text, and shapes, extend this class.
+ */
 class VisibleObject extends GameObject{
+	/**
+	 * Represents an object that can be rendered on the screen.
+	 * @extends GameObject
+	 * @param {Object} options - Configuration options for the object.
+	 * @param {number} [options.layer=0] - The rendering layer of the object.
+	 * @param {boolean} [options.visible=true] - Determines if the object is visible.
+	 */
 	constructor({
 		layer = 0,
 		visible = true,
@@ -520,10 +475,38 @@ class VisibleObject extends GameObject{
 		super(GameObjectOptions)
 		this.layer = layer;
 		this.visible = visible;
+		if (this.draw === VisibleObject.prototype.draw) {
+            throw new Error(`${this.constructor.name} must override the draw() method.`);
+        }
 	}
+
+	/**
+	 * Function that engine calls after applying local transformations to canvas context
+	 * @param {Number} dt - time since last frame
+	 * @param {CanvasRenderingContext2D} ctx - context to canvas that is being drawn on
+	 */
+	draw(dt, ctx) {
+        throw new Error("draw() method must be implemented in a subclass.");
+    }
 }
 
+/**
+ * A visible game object that renders a custom shape using Path2D.
+ * Allows for filled or outlined shapes with configurable properties.
+ * Useful for drawing vector graphics.
+ *
+ * @extends VisibleObject
+ */
 class CustomShapeObject extends VisibleObject{
+	/**
+	 * Represents an object with a custom drawable shape.
+	 * @extends VisibleObject
+	 * @param {Object} options - Configuration options for the object.
+	 * @param {Path2D} [options.shape=new Path2D()] - The shape to be drawn.
+	 * @param {string} [options.color='white'] - The fill color of the shape.
+	 * @param {boolean} [options.drawAsOutline=false] - Whether to draw the shape as an outline.
+	 * @param {number} [options.outlineThickness=1] - The thickness of the shape outline.
+	 */
 	constructor({
 		shape = new Path2D(),
 		color = 'white',
@@ -538,9 +521,37 @@ class CustomShapeObject extends VisibleObject{
 		this.shape = shape;
 		this.color = color;
 	}
+
+	draw(dt, ctx){
+		if(this.drawAsOutline){
+			ctx.strokeStyle = this.color;
+			ctx.lineWidth = this.outlineThickness;
+			ctx.stroke(this.shape);
+		}
+		else{
+			ctx.fillStyle = this.color;
+			ctx.fill(this.shape);
+		}
+	}
 }
 
+/**
+ * A visible game object that renders an image.
+ * Supports image repetition, scaling, and source cropping overrides.
+ *
+ * @extends VisibleObject 
+ */
 class ImageObject extends VisibleObject{
+	/**
+	 * Represents an object that displays an image.
+	 * @extends VisibleObject
+	 * @param {Object} options - Configuration options for the object.
+	 * @param {HTMLImageElement} [options.image=new Image()] - The image to be displayed.
+	 * @param {boolean} [options.repeat=false] - Determines if the image should repeat.
+	 * @param {Vector2|null} [options.overrideDisplaySize=null] - Custom display size for the image.
+	 * @param {Vector2|null} [options.overrideImgSourceSize=null] - Custom source size for the image.
+	 * @param {Vector2|null} [options.overrideImgSourcePosition=null] - Custom source position for the image.
+	 */
 	constructor({
 		image = new Image(),
 		repeat = false,
@@ -557,9 +568,66 @@ class ImageObject extends VisibleObject{
 		this.overrideImgSourceSize = overrideImgSourceSize;
 		this.overrideImgSourcePosition = overrideImgSourcePosition;
 	}
+
+	draw(dt, ctx){
+		var ImageSize = this.overrideDisplaySize == null ? new Vector2(this.image.width, this.image.height) : this.overrideDisplaySize;
+		var SourceImagePosition = this.overrideImgSourcePosition == null ? Vector2.Zero : this.overrideImgSourcePosition;
+		var SourceImageSize = this.overrideImgSourceSize == null ? new Vector2(this.image.width, this.image.height) : this.overrideImgSourceSize;
+		if (!this.repeat){
+			ctx.drawImage(
+				this.image, 
+				SourceImagePosition.x,
+				SourceImagePosition.y,
+				SourceImageSize.x,
+				SourceImageSize.y,
+				-(ImageSize.x / 2), 
+				-(ImageSize.y / 2), 
+				ImageSize.x, 
+				ImageSize.y
+			)
+		}
+		else{
+			let repeatMode = 'repeat';
+			let patternTransform = ctx.getTransform();
+
+			patternTransform.e = -(ImageSize.x / 2);
+			patternTransform.f = -(ImageSize.y / 2);
+
+			let imgPattern = ctx.createPattern(this.image, repeatMode);
+			ctx.fillStyle = imgPattern;
+			if(imgPattern != null){
+				imgPattern.setTransform(patternTransform);
+				ctx.fillRect(-(ImageSize.x / 2), -(ImageSize.y / 2), ImageSize.x, ImageSize.y)
+			}
+		}
+	}
 }
 
+/**
+ * A visible game object that plays frame-based animations using a sprite sheet.
+ * Supports sprite sheets arranged in horizontal or vertical stacks.
+ * Includes animation controls such as FPS, playback direction, looping, and frame offsets.
+ *
+ * @extends VisibleObject
+ */
 class ImageAnimObject extends VisibleObject{
+	/**
+	 * Represents an animated object using a spritesheet.
+	 * @extends VisibleObject
+	 * @param {Object} options - Configuration options for the object.
+	 * @param {HTMLImageElement} [options.image=new Image()] - The spritesheet image.
+	 * @param {boolean} [options.horizontalStacked=true] - Defines whether frames are stacked horizontally.
+	 * @param {Vector2} [options.spriteColRowCount=new Vector2(0,0)] - The column and row count of the spritesheet.
+	 * @param {Vector2} [options.spriteSize=new Vector2(0,0)] - The size of each sprite frame.
+	 * @param {Vector2|null} [options.overrideDisplaySize=null] - Custom display size for the sprite.
+	 * @param {number} [options.spriteAmount=0] - The total number of sprite frames in the animation.
+	 * @param {number} [options.currentFrame=0] - The current frame index.
+	 * @param {number} [options.fps=24] - Frames per second for animation.
+	 * @param {boolean} [options.stopAtEnd=false] - Whether the animation stops at the last frame.
+	 * @param {boolean} [options.reverseAtEnd=false] - Whether the animation reverses direction at the last frame.
+	 * @param {number} [options.animDirection=1] - The animation playback direction (1 for forward, -1 for reverse).
+	 * @param {Vector2} [options.colRowStartOffset=new Vector2(0,0)] - Column and row offset for starting the animation.
+	 */
 	constructor({
 		image = new Image(),
 		horizontalStacked = true,
@@ -704,9 +772,44 @@ class ImageAnimObject extends VisibleObject{
 
 		this.#updateFrame();
 	}
+
+	draw(dt, ctx){
+		var displaySize = this.overrideDisplaySize == null ? this.spriteSize : this.overrideDisplaySize;
+		ctx.drawImage(
+			this.image, 
+			this.spriteSize.x * this.currentFrame.x,
+			this.spriteSize.y * this.currentFrame.y,
+			this.spriteSize.x,
+			this.spriteSize.y,
+			-(displaySize.x / 2), 
+			-(displaySize.y / 2), 
+			displaySize.x, 
+			displaySize.y
+		)
+		this.AddTime(dt)
+	}
 }
 
+/**
+ * A visible game object that renders text on-screen.
+ * Supports customizable font, color, alignment, line height, and optional outline drawing.
+ * Useful for UI elements, dialogue, or in-game labels.
+ *
+ * @extends VisibleObject
+ */
 class TextObject extends VisibleObject{
+	/**
+	 * Represents an object that renders text on the screen.
+	 * @extends VisibleObject
+	 * @param {Object} options - Configuration options for the object.
+	 * @param {string} [options.text="new text!"] - The text content.
+	 * @param {string} [options.color='white'] - The text color.
+	 * @param {boolean} [options.drawAsOutline=false] - Whether to draw the text as an outline.
+	 * @param {number} [options.outlineThickness=1] - The thickness of the text outline.
+	 * @param {string} [options.font="30px Verdana"] - The font styling for the text.
+	 * @param {string} [options.alignment="left"] - The text alignment ("left", "center", "right").
+	 * @param {number} [options.lineHeight=30] - The line height for multi-line text.
+	 */
 	constructor({
 		text = "new text!",
 		color = 'white',
@@ -727,8 +830,38 @@ class TextObject extends VisibleObject{
 		this.alignment = alignment;
 		this.lineHeight = lineHeight;
 	}
+
+	draw(dt, ctx){
+		ctx.font = this.font;
+		ctx.textAlign = this.alignment;
+		let y = 0;
+		let lines = this.text.split("\n");
+		if(this.drawAsOutline){
+			ctx.strokeStyle = this.color;
+			ctx.lineWidth = this.outlineThickness;
+			lines.forEach(line => {
+				ctx.strokeText(line, 0, y);
+				y += this.lineHeight;
+			});
+		}
+		else{
+			ctx.fillStyle = this.color;
+			lines.forEach(line => {
+				ctx.fillText(line, 0, y);
+				y += this.lineHeight;
+			});
+		}
+	}
 }
 
+/**
+ * Represents a 2D vector with basic vector operations such as addition, subtraction, 
+ * multiplication, division, normalization, and dot product. 
+ * This class is useful for handling positions, velocities, and directions in 2D space.
+ *
+ * @param {number} x - The x-coordinate of the vector.
+ * @param {number} y - The y-coordinate of the vector.
+ */
 class Vector2{
 	static Up = new Vector2(0, 1);
 	static Down = new Vector2(0, -1);
@@ -736,6 +869,12 @@ class Vector2{
 	static Right = new Vector2(1, 0);
 	static Zero = new Vector2(0, 0);
 
+	/**
+	* Creates an instance of a 2D vector with the given coordinates.
+	* 
+	* @param {number} x - The x-coordinate of the vector.
+	* @param {number} y - The y-coordinate of the vector.
+	*/
 	constructor(x, y)
 	{
 		this.x = x;
