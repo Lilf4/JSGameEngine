@@ -9,8 +9,10 @@
       
       
       
+        <link rel="prev" href="index.html">
       
-        <link rel="next" href="getting-started.html">
+      
+        <link rel="next" href="project-management/Initialise.html">
       
       
       <link rel="icon" href="assets/images/favicon.png">
@@ -18,7 +20,7 @@
     
     
       
-        <title>JSGameEngine</title>
+        <title>Getting Started - JSGameEngine</title>
       
     
     
@@ -72,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#welcome-to-jsgameengine" class="md-skip">
+        <a href="#getting-started-initializing-your-project" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Getting Started
             
           </span>
         </div>
@@ -210,6 +212,27 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -226,7 +249,7 @@
           
   
   <span class="md-ellipsis">
-    Home
+    Getting Started
     
   </span>
   
@@ -234,11 +257,11 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="index.html" class="md-nav__link md-nav__link--active">
+      <a href="getting-started.html" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    Home
+    Getting Started
     
   </span>
   
@@ -261,9 +284,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#project-layout" class="md-nav__link">
+  <a href="#windows" class="md-nav__link">
     <span class="md-ellipsis">
-      Project layout
+      Windows
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unix-based-systems-linux-macos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unix-based Systems (Linux, macOS)
     </span>
   </a>
   
@@ -273,27 +305,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="getting-started.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Getting Started
-    
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -828,9 +839,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#project-layout" class="md-nav__link">
+  <a href="#windows" class="md-nav__link">
     <span class="md-ellipsis">
-      Project layout
+      Windows
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unix-based-systems-linux-macos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unix-based Systems (Linux, macOS)
     </span>
   </a>
   
@@ -852,17 +872,36 @@
 
 
 
-<h1 id="welcome-to-jsgameengine">Welcome to JSGameEngine</h1>
-<p>JSGameEngine is a simple game engine written in JavaScript.<br></p>
-<p>Explore the documentation to get started with the engine, or dive into the examples to see it in action.</p>
-<h2 id="project-layout">Project layout</h2>
-<pre><code>docs            # The documentation files you are currently reading.
-docs-src        # The source files for the documentation you are currently reading.
-Examples/       # A collection of small example projects created during the engine's development.
-Projects/       # The folder where your game projects will live.
-Templates/      # Project templates to help kickstart new projects.
-GameEngine.js   # The core of the game engine itself.
+<h1 id="getting-started-initializing-your-project">Getting Started: Initializing Your Project</h1>
+<p>To get started with your new project, you can use the provided initialization scripts. Depending on your operating system, you can use either <code>ProjectInit.bat</code> for Windows or <code>ProjectInit.sh</code> for Unix-based systems (Linux, macOS).</p>
+<h2 id="windows">Windows</h2>
+<ul>
+<li>Open a Command Prompt.</li>
+<li>Navigate to the directory where <code>ProjectInit.bat</code> is located.</li>
+<li>Run the script by typing:</li>
+</ul>
+<pre><code class="language-bat">ProjectInit.bat
 </code></pre>
+<ul>
+<li>Follow the on-screen instructions to complete the initialization.</li>
+</ul>
+<h2 id="unix-based-systems-linux-macos">Unix-based Systems (Linux, macOS)</h2>
+<ul>
+<li>Open a terminal.</li>
+<li>Navigate to the directory where <code>ProjectInit.sh</code> is located.</li>
+<li>Make the script executable (if it is not already) by running:</li>
+</ul>
+<pre><code class="language-sh">chmod +x ProjectInit.sh
+</code></pre>
+<ul>
+<li>Run the script by typing:</li>
+</ul>
+<pre><code class="language-sh">./ProjectInit.sh
+</code></pre>
+<ul>
+<li>Follow the on-screen instructions to complete the initialization.</li>
+</ul>
+<p>Once the initialization is complete, your project will be set up and ready for development. Happy coding!</p>
 
 
 
