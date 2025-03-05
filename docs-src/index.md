@@ -1,17 +1,13 @@
-# Welcome to MkDocs
+# Welcome to JSGameEngine
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+JSGameEngine is a simple game engine written in JavaScript.<br>
 
-## Commands
-
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+Explore the documentation to get started with the engine, or dive into the examples to see it in action.
 
 ## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+	docs			# The documentation files you are currently reading.
+	docs-src		# The source files for the documentation you are currently reading.
+	Examples/		# A collection of small example projects created during the engine's development.
+	Projects/		# The folder where your game projects will live.
+	Templates/		# Project templates to help kickstart new projects.
+	GameEngine.js	# The core of the game engine itself.
