@@ -24,6 +24,9 @@ function GetUUID(){
 	return Math.random().toString(16).slice(2)
 }
 
+/**
+ * Handles resources such as loaded images and allows for caching of these.
+ */
 class ResourceManager {
 	constructor(){
 		this.cache = new Map();
@@ -58,6 +61,7 @@ class ResourceManager {
 		this.cache.clear();
 	}
 }
+
 const resManager = new ResourceManager();
 
 /**
@@ -553,7 +557,8 @@ class ImageObject extends VisibleObject{
 	 * @param {Vector2|null} [options.overrideImgSourcePosition=null] - Custom source position for the image.
 	 */
 	constructor({
-		image = new Image(),
+		image = null,
+		imageUrl = null,
 		repeat = false,
 		overrideDisplaySize = null,
 		overrideImgSourceSize = null,
@@ -562,11 +567,32 @@ class ImageObject extends VisibleObject{
 	} = {})
 	{
 		super(GameObjectOptions)
-		this.image = image;
+
+		if(image != null){
+			this.image = image;
+		}
+		else if(imageUrl != null)
+		{
+			this.imageUrl = imageUrl;
+		}
+		else{
+			this.image = new Image();
+		}
+
 		this.repeat = repeat;
 		this.overrideDisplaySize = overrideDisplaySize;
 		this.overrideImgSourceSize = overrideImgSourceSize;
 		this.overrideImgSourcePosition = overrideImgSourcePosition;
+	}
+
+	set imageUrl(val){
+		(async function test(val) {
+			return (await resManager.LoadImage(val))
+		})(val).then((v) => this.image = v);
+	}
+
+	get imageUrl(){
+		return this.image.src;
 	}
 
 	draw(dt, ctx){
@@ -629,7 +655,8 @@ class ImageAnimObject extends VisibleObject{
 	 * @param {Vector2} [options.colRowStartOffset=new Vector2(0,0)] - Column and row offset for starting the animation.
 	 */
 	constructor({
-		image = new Image(),
+		image = null,
+		imageUrl = null,
 		horizontalStacked = true,
 		spriteColRowCount = new Vector2(0,0),
 		spriteSize = new Vector2(0,0),
@@ -645,7 +672,16 @@ class ImageAnimObject extends VisibleObject{
 	} = {})
 	{
 		super(GameObjectOptions)
-		this.image = image;
+		if(image != null){
+			this.image = image;
+		}
+		else if(imageUrl != null)
+		{
+			this.imageUrl = imageUrl;
+		}
+		else{
+			this.image = new Image();
+		}
 		this.horizontalStacked = horizontalStacked;
 		this.spriteColRowCount = spriteColRowCount;
 		this.overrideDisplaySize = overrideDisplaySize,
@@ -662,6 +698,16 @@ class ImageAnimObject extends VisibleObject{
 		this.totalAnimDuration = 0;
 		this.#calcAnimTime();
 		this.#calcSpriteSize();
+	}
+
+	set imageUrl(val){
+		(async function test(val) {
+			return (await resManager.LoadImage(val))
+		})(val).then((v) => this.image = v);
+	}
+
+	get imageUrl(){
+		return this.image.src;
 	}
 
 	/**
