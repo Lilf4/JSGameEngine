@@ -1,7 +1,8 @@
 //#region PlayerCharacter
 // Player object with custom attributes
 let playerChar = new ImageAnimObject({
-    position		: new Vector2(0, -185),
+    // position		: new Vector2(0, -185),
+    position		: new Vector2(0, 64),
 	fps				: 24,
 	animDirection	: 1,
 	state			: ["idle", "moving", "jumping"],
@@ -11,7 +12,7 @@ let playerChar = new ImageAnimObject({
 
 // Player speed
 let move_speed = 120.0
-let jump_force = 2
+let jump_force = 400
 
 // Animation sheets for the players various animations
 playerSheets = {
@@ -37,7 +38,7 @@ function UserInput(delta){
 		if (playerChar.is_on_floor == false) return;
 		playerChar.state = "jumping"
 		playerChar.is_on_floor = false
-		playerChar.velocityY += jump_force
+		playerChar.velocityY += jump_force*delta
 		setAnimation(playerSheets.jump)
 	}
 	else if (Engine.IsKeyPressed('v')) {

@@ -16,7 +16,7 @@ Engine.Start();
 async function INIT(){
 	// CreateLeveL();
 	setAnimation(playerSheets.idle);
-	// setImage('Resources/Block.png');
+	setImage('Resources/Block.png');
 	playerChar.Play();
 	playerChar.is_on_floor = true
 }
