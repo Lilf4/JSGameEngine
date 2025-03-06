@@ -1,8 +1,8 @@
 let block = new ImageObject({
     //11*16
-    position: new Vector2(0, 0),
-    drawCollider: false,
-    colliderSize: new Vector2(48, 48),
+    position: new Vector2(0, 10),
+    drawCollider: true,
+    colliderSize: new Vector2(800, 500)
 });
 
 // (async function () {
