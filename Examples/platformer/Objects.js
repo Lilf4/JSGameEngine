@@ -2,7 +2,7 @@ let block = new ImageObject({
     //11*16
     position: new Vector2(0, 10),
     drawCollider: true,
-    colliderSize: new Vector2(800, 500)
+    colliderSize: new Vector2(48, 48)
 });
 
 // (async function () {
@@ -10,5 +10,4 @@ let block = new ImageObject({
 // })();
 async function setImage(image){
     block.image = await resManager.LoadImage(image);
-    console.log(block.Image);
 }

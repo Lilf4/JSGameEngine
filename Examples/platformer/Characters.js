@@ -7,7 +7,8 @@ let playerChar = new ImageAnimObject({
 	animDirection	: 1,
 	state			: ["idle", "moving", "jumping"],
 	is_on_floor		: true,
-	velocityY		: 0
+	velocityY		: 0,
+	currentFrame	: new Vector2(0, 0)
 });
 
 // Player speed

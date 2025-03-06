@@ -33,7 +33,7 @@ async function GAMELOGIC(delta){
 	if (!UserInput(delta)) {
 		if (playerChar.state != "jumping" || playerChar.is_on_floor) {
 			playerChar.state = "idle"
-			setAnimation(playerSheets.idle) 
+			setAnimation(playerSheets.idle)
 		}
 	}
 	
