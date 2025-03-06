@@ -12,6 +12,7 @@ let RepeatingImageObj = new ImageObject({
 Engine.AddObject(RepeatingImageObj);
 
 let ResizingImageObj = new ImageObject({
+	imageUrl: 'Resources/TestImage.png',
 	useSourceSize: false, 
 	position: new Vector2(-400, 150), 
 	overrideDisplaySize: new Vector2(64, 64), 
@@ -58,7 +59,6 @@ Engine.SetLoopFunction(GAMELOGIC);
 Engine.Start();
 async function INIT(){
 	RepeatingImageObj.image = await resManager.LoadImage('Resources/TestImage.png');
-	ResizingImageObj.image = await resManager.LoadImage('Resources/TestImage.png');
 
 	AnimatedImageObj1.image = await resManager.LoadImage('Resources/FinishFlagRaising-sheet.png');
 	AnimatedImageObj1.SetSpriteDataByColRowCount(new Vector2(8, 1));
