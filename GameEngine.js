@@ -100,8 +100,6 @@ class GameEngine {
 	 * @param {KeyboardEvent} event string representation of key to check
 	 */
 	KeyDownEventHandler(event){
-		console.log(event.key);
-		console.log(this.KeysDown);
 		event.preventDefault();
 		if(!(event.key in this.KeysDown)){
 			this.KeysDown[event.key] = { }
