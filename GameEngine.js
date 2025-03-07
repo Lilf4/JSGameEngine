@@ -89,17 +89,28 @@ class GameEngine {
 		this.screenSize = Size;
 		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"});
 
+		this.MouseMoveEventHandler = this.MouseMoveEventHandler.bind(this);
 		this.KeyDownEventHandler = this.KeyDownEventHandler.bind(this);
 		this.KeyUpEventHandler = this.KeyUpEventHandler.bind(this);
 		this.MouseDownEventHandler = this.MouseDownEventHandler.bind(this);
 		this.MouseUpEventHandler = this.MouseUpEventHandler.bind(this);
+		addEventListener("mousemove", this.MouseMoveEventHandler);
 		addEventListener("mousedown", this.MouseDownEventHandler);
 		addEventListener("mouseup", this.MouseUpEventHandler);
 		addEventListener("keydown", this.KeyDownEventHandler);
 		addEventListener("keyup", this.KeyUpEventHandler);
 	}
 
-	
+	#mouseState = {
+		screenPosition: new Vector2(),
+		isOverCanvas: false
+	}
+
+	MouseMoveEventHandler(event){
+		let rect = this.canvas.getBoundingClientRect();
+		this.#mouseState.screenPosition = new Vector2(event.clientX - rect.left, event.clientY - rect.top)
+		this.#mouseState.isOverCanvas = event.target == this.canvas || (this.#mouseState.screenPosition.x >= 0 && this.#mouseState.screenPosition.x <= this.screenSize.y && this.#mouseState.screenPosition.y >= 0 && this.#mouseState.screenPosition.y <= this.screenSize.y);
+	}
 
 	/**
 	 * Handles mouse down events
@@ -232,6 +243,22 @@ class GameEngine {
 	IsMouseDown(button){
 		let ButtonCode = `MOUSE${button}`
 		return (ButtonCode in this.KeysDown);
+	}
+
+	/**
+	 * Returns the current mouse position in screen space
+	 * @returns {Vector2} - mouse position in screen space
+	 */
+	GetMousePosition(){
+		return this.#mouseState.screenPosition;
+	}
+
+	/**
+	 * Returns check of whether the mouse is over the game screen
+	 * @returns {boolean} - **True** if mouse is over the game screen, else returns **False**
+	 */
+	IsMouseOverCanvas(){
+		return this.#mouseState.isOverCanvas;
 	}
 
 	/**
