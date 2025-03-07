@@ -730,7 +730,7 @@ class ImageAnimObject extends VisibleObject{
 			this.spriteAmount = SpriteAmount;
 		}
 		else{
-			this.SpriteAmount = this.spriteColRowCount.x * this.spriteColRowCount.y;
+			this.spriteAmount = this.spriteColRowCount.x * this.spriteColRowCount.y;
 		}
 		
 		this.#calcAnimTime();
