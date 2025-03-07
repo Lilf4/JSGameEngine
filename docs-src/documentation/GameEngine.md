@@ -12,11 +12,17 @@ Creates an instance of the GameEngine.
 
 ## Instance Methods
 
-### `IsKeyPressed(key)`
-Checks whether a key has just been let go.
+### `IsKeyReleased(key)`
+Checks whether a key has just been released.
 
 - **key**: string representation of key to check.
-- **Returns**: `boolean` **True** if key has just been let go, else returns **False**.
+- **Returns**: `boolean` **True** if key has just been released, else returns **False**.
+
+### `IsKeyPressed(key)`
+Checks whether a key has just been pressed.
+
+- **key**: string representation of key to check.
+- **Returns**: `boolean` **True** if key has just been pressed, else returns **False**.
 
 ### `IsKeyDown(key)`
 Checks whether a key is currently being held down.
