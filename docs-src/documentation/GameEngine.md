@@ -30,6 +30,35 @@ Checks whether a key is currently being held down.
 - **key**: string representation of key to check.
 - **Returns**: `boolean` **True** if key is currently held down, else returns **False**.
 
+### `IsMouseReleased(button)`
+Checks whether a mouse button has just been released.
+
+- **button**: string representation of button to check.
+- **Returns**: `boolean` **True** if button has just been released, else returns **False**.
+
+### `IsMousePressed(button)`
+Checks whether a mouse button has just been pressed.
+
+- **button**: string representation of button to check.
+- **Returns**: `boolean` **True** if button has just been pressed, else returns **False**.
+
+### `IsMouseDown(button)`
+Checks whether a mouse button is currently being held down.
+
+- **button**: string representation of button to check.
+- **Returns**: `boolean` **True** if button is currently held down, else returns **False**.
+
+### `GetMousePosition()`
+Returns the current mouse position in screen space.
+
+- **Returns**: `Vector2` mouse position in screen space.
+
+### `IsMouseOverCanvas()`
+Returns check of whether the mouse is over the game screen
+
+- **key**: string representation of key to check.
+- **Returns**: `boolean` **True** if mouse is over the game screen, else returns **False**
+
 ### `AddObject(object)`
 Adds a `GameObject` to the engine.
 
