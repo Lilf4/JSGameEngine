@@ -91,24 +91,61 @@ class GameEngine {
 
 		this.KeyDownEventHandler = this.KeyDownEventHandler.bind(this);
 		this.KeyUpEventHandler = this.KeyUpEventHandler.bind(this);
+		this.MouseDownEventHandler = this.MouseDownEventHandler.bind(this);
+		this.MouseUpEventHandler = this.MouseUpEventHandler.bind(this);
+		addEventListener("mousedown", this.MouseDownEventHandler);
+		addEventListener("mouseup", this.MouseUpEventHandler);
 		addEventListener("keydown", this.KeyDownEventHandler);
 		addEventListener("keyup", this.KeyUpEventHandler);
 	}
 
+	
+
+	/**
+	 * Handles mouse down events
+	 * @param {MouseEvent} event
+	 */
+	MouseDownEventHandler(event){
+		event.preventDefault();
+		let ButtonCode = `MOUSE${event.button}`
+		if(!(ButtonCode in this.KeysDown)){
+			this.KeysDown[ButtonCode] = { pressed: performance.now(), checked: false}
+		}
+	}
+
+	/**
+	 * Handles mouse up events
+	 * @param {MouseEvent} event
+	 */
+	MouseUpEventHandler(event){
+		event.preventDefault();
+		let ButtonCode = `MOUSE${event.button}`
+		if(ButtonCode in this.KeysDown){
+			this.KeysPressed[ButtonCode] = { pressed: performance.now() };
+			delete this.KeysDown[ButtonCode];
+			
+			setTimeout(() => {
+				if (ButtonCode in this.KeysPressed && performance.now() - this.KeysPressed[ButtonCode]?.pressed > this.ClickLimit) {
+					delete this.KeysPressed[ButtonCode];
+				}
+			}, this.ClickLimit + 10);
+		}
+	}
+
 	/**
 	 * Handles key down events
-	 * @param {KeyboardEvent} event string representation of key to check
+	 * @param {KeyboardEvent} event
 	 */
 	KeyDownEventHandler(event){
 		event.preventDefault();
 		if(!(event.key in this.KeysDown)){
-			this.KeysDown[event.key] = { }
+			this.KeysDown[event.key] = { pressed: performance.now(), checked: false}
 		}
 	}
 
 	/**
 	 * Handles key up events
-	 * @param {KeyboardEvent} event string representation of key to check
+	 * @param {KeyboardEvent} event
 	 */
 	KeyUpEventHandler(event){
 		event.preventDefault();
@@ -125,13 +162,26 @@ class GameEngine {
 	}
 
 	/**
-	 * Checks whether key has **just** been let go
+	 * Checks whether key has **just** been released
 	 * @param {string} key string representation of key to check
 	 * @returns {boolean} **True** if key has just been let go, else returns **False**
 	 */
-	IsKeyPressed(key){
+	IsKeyReleased(key){
 		if (key in this.KeysPressed && performance.now() - this.KeysPressed[key].pressed <= this.ClickLimit){
 			delete this.KeysPressed[key];
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks whether key has **just** been pressed
+	 * @param {string} key string representation of key to check
+	 * @returns {boolean} **True** if key has just been pressed, else returns **False**
+	 */
+	IsKeyPressed(key){
+		if (key in this.KeysDown && !this.KeysDown[key].checked && performance.now() - this.KeysDown[key].pressed <= this.ClickLimit){
+			this.KeysDown[key].checked = true;
 			return true;
 		}
 		return false;
@@ -147,12 +197,58 @@ class GameEngine {
 	}
 	
 	/**
+	 * Checks whether mouse button has just been pressed
+	 * @param {string} button string representation of key to check
+	 * @returns {boolean} **True** if button has just been pressed, else returns **False**
+	 */
+	IsMousePressed(button){
+		let ButtonCode = `MOUSE${button}`
+		if (ButtonCode in this.KeysDown && !this.KeysDown[ButtonCode].checked && performance.now() - this.KeysDown[ButtonCode].pressed <= this.ClickLimit){
+			this.KeysDown[ButtonCode].checked = true;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks whether mouse button has just been released
+	 * @param {string} button string representation of key to check
+	 * @returns {boolean} **True** if button has just been released, else returns **False**
+	 */
+	IsMouseReleased(button){
+		let ButtonCode = `MOUSE${button}`
+		if (ButtonCode in this.KeysPressed && performance.now() - this.KeysPressed[ButtonCode].pressed <= this.ClickLimit){
+			delete this.KeysPressed[ButtonCode];
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks whether mouse button is being held down
+	 * @param {string} button string representation of key to check
+	 * @returns {boolean} **True** if button is being held down, else returns **False**
+	 */
+	IsMouseDown(button){
+		let ButtonCode = `MOUSE${button}`
+		return (ButtonCode in this.KeysDown);
+	}
+
+	/**
 	 * Renderes current game frame
 	 * @param {Number} delta - time since last frame
 	 */
 	#DrawScene(delta){
 		this.ctx.fillStyle = this.background
 		this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+		this.ctx.save();
+		this.ctx.translate(this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
+
+		//Apply camera properties
+		this.ctx.rotate(this.CameraObject.rotation * Math.PI / 180);
+		this.ctx.scale(this.CameraObject.scale.x, this.CameraObject.scale.y);
+		
+		this.ctx.translate(-this.ctx.canvas.width / 2, -this.ctx.canvas.height / 2);
 		this.GameObjectList.forEach(object => {
 			if (!(object instanceof VisibleObject) || !object.visible) {return;}
 
@@ -182,6 +278,7 @@ class GameEngine {
 				this.ctx.restore();
 			}
 		});
+		this.ctx.restore();
 	}
 
 	/**
