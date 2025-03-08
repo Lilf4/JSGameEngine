@@ -356,6 +356,7 @@ class GameEngine {
 	 * Adds a GameObject to the engine.
 	 * Ensures the object is an instance of GameObject (or a subclass of it) and gives it a unique ID.
 	 * @param {GameObject} object - The GameObject instance to add to the engine.
+	 * @param {string} renderMode - The render mode/pass the object should be under (world/ui)
 	 * @throws {Error} If the object is not an instance of GameObject or its subclass.
 	 */
 	AddObject(object, renderMode = 'world'){
