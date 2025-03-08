@@ -1,7 +1,6 @@
 /*
  * TODO
  * Way too many things ;-;
- * Input Handler
  * Don't draw objects not currently on screen
  * */
 const BasicSquarePath = new Path2D();
@@ -71,6 +70,8 @@ class GameEngine {
 	background = 'black';
 	lastFrameTime = performance.now();
 	GameObjectDict = {}
+	GameObjectUIRenderList = []
+	GameObjectWorldRenderList = []
 	GameObjectList = []
 	KeysDown = {}
 	KeysPressed = {}
@@ -261,6 +262,17 @@ class GameEngine {
 		return this.#mouseState.isOverCanvas;
 	}
 
+	#cursorObject = new GameObject({position: new Vector2(0,0), colliderSize: new Vector2(1,1)})
+	/**
+	 * Returns a list of gameobjects that the mouse is currently over/colliding with
+	 * @returns {GameObject[]} - list of colliding GameObjects
+	 */
+	GetMouseCollisions(){
+		this.#cursorObject.position = this.screenToWorldSpace(this.#mouseState.screenPosition);
+		return this.GetCollidingObjects(this.#cursorObject)
+	}
+
+
 	/**
 	 * Renderes current game frame
 	 * @param {Number} delta - time since last frame
@@ -276,7 +288,9 @@ class GameEngine {
 		this.ctx.scale(this.CameraObject.scale.x, this.CameraObject.scale.y);
 		
 		this.ctx.translate(-this.ctx.canvas.width / 2, -this.ctx.canvas.height / 2);
-		this.GameObjectList.forEach(object => {
+
+		//WORLD PASS
+		this.GameObjectWorldRenderList.forEach(object => {
 			if (!(object instanceof VisibleObject) || !object.visible) {return;}
 
 			var objScreenPos = this.worldToScreenSpace(object.position);
@@ -306,6 +320,36 @@ class GameEngine {
 			}
 		});
 		this.ctx.restore();
+		//UI PASS
+		this.GameObjectUIRenderList.forEach(object => {
+			if (!(object instanceof VisibleObject) || !object.visible) {return;}
+
+			var objScreenPos = object.position;
+
+			this.ctx.save();
+			this.ctx.translate(objScreenPos.x, objScreenPos.y);
+			this.ctx.rotate(object.rotation * Math.PI / 180);
+			this.ctx.scale(object.scale.x, object.scale.y);
+
+			object.draw(delta, this.ctx);
+
+			this.ctx.restore();
+
+			if (object.drawCollider){
+				let colliderPos = this.worldToScreenSpace(object.movedColliderPosition)
+				this.ctx.save();
+				this.ctx.translate(colliderPos.x, colliderPos.y);
+				this.ctx.rotate(object.rotation * Math.PI / 180);
+				this.ctx.scale(object.scale.x, object.scale.y);
+				this.ctx.beginPath();
+				this.ctx.strokeStyle = 'red';
+				this.ctx.lineWidth = 1;
+				this.ctx.rect(-(object.colliderSize.x / 2), -(object.colliderSize.y / 2), object.colliderSize.x, object.colliderSize.y)
+				this.ctx.closePath();
+				this.ctx.stroke();
+				this.ctx.restore();
+			}
+		});
 	}
 
 	/**
@@ -314,7 +358,7 @@ class GameEngine {
 	 * @param {GameObject} object - The GameObject instance to add to the engine.
 	 * @throws {Error} If the object is not an instance of GameObject or its subclass.
 	 */
-	AddObject(object){
+	AddObject(object, renderMode = 'world'){
 		if (!(object instanceof GameObject)) {
 			throw new Error(`The object must be an instance of GameObject or a subclass of it, but received: ${object}`);
 		}
@@ -324,6 +368,12 @@ class GameEngine {
 		} while(uuid in this.GameObjectDict);
 		object.id = uuid
 		this.GameObjectDict[uuid] = object
+		if(renderMode == 'world'){
+			this.GameObjectWorldRenderList.push(object)
+		}
+		else if(renderMode == 'ui'){
+			this.GameObjectUIRenderList.push(object);
+		}
 		this.#CreateObjectRenderOrderList()
 	}
 
@@ -334,6 +384,16 @@ class GameEngine {
 	RemObject(object){
 		if(object.id in this.GameObjectDict){
 			delete this.GameObjectDict[object.id]
+
+			let objIndex = this.GameObjectUIRenderList.findIndex(o => o.id == object.id)
+			if(objIndex > 0){
+				this.GameObjectUIRenderList.slice(objIndex, 1);
+			}
+
+			objIndex = this.GameObjectWorldRenderList.findIndex(o => o.id == object.id)
+			if(objIndex > 0){
+				this.GameObjectWorldRenderList.slice(objIndex, 1);
+			}
 		}
 		this.#CreateObjectRenderOrderList();
 	}
@@ -344,6 +404,8 @@ class GameEngine {
 	#CreateObjectRenderOrderList(){
 		this.GameObjectList = [];
 		this.GameObjectList = Object.values(this.GameObjectDict).sort((a, b) => b.layer - a.layer);
+		this.GameObjectUIRenderList.sort((a, b) => b.layer - a.layer);
+		this.GameObjectWorldRenderList.sort((a, b) => b.layer - a.layer);
 	}
 
 	/**
@@ -492,9 +554,19 @@ class GameEngine {
 	 */
 	screenToWorldSpace(pos){
 		var relativePos = Vector2.sub(pos, Vector2.div(this.screenSize, 2));
+
 		relativePos = Vector2.add(relativePos, this.CameraObject.position);
-		relativePos.y *= -1;
-		return relativePos
+
+		var angle = (this.CameraObject.rotation * Math.PI) / 180;
+		var cosA = Math.cos(angle);
+    	var sinA = -Math.sin(angle);
+
+		var rotatedX = relativePos.x * cosA - relativePos.y * sinA;
+    	var rotatedY = relativePos.x * sinA + relativePos.y * cosA;
+
+		var rotatedPos = new Vector2(rotatedX, -rotatedY);
+		
+		return rotatedPos
 	}
 }
 
