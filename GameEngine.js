@@ -387,13 +387,13 @@ class GameEngine {
 			delete this.GameObjectDict[object.id]
 
 			let objIndex = this.GameObjectUIRenderList.findIndex(o => o.id == object.id)
-			if(objIndex > 0){
-				this.GameObjectUIRenderList.slice(objIndex, 1);
+			if(objIndex >= 0){
+				this.GameObjectUIRenderList.splice(objIndex, 1);
 			}
 
 			objIndex = this.GameObjectWorldRenderList.findIndex(o => o.id == object.id)
-			if(objIndex > 0){
-				this.GameObjectWorldRenderList.slice(objIndex, 1);
+			if(objIndex >= 0){
+				this.GameObjectWorldRenderList.splice(objIndex, 1);
 			}
 		}
 		this.#CreateObjectRenderOrderList();
