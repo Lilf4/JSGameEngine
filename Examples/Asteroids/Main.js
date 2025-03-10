@@ -60,7 +60,7 @@ let AsteroidPoints = [
 ]
 let Bullets = [];
 let BulletSpeed = 600;
-let BulletLifeTime = 600;
+let BulletLifeTime = 1000;
 let ShootingCooldown = 200;
 let LastShot = 0;
 
@@ -128,11 +128,10 @@ async function GAMELOGIC(delta){
 		Player.rotation += delta * 200;
 	}
 
-	if(Engine.IsKeyDown(" ") && performance.now() - LastShot >= ShootingCooldown){
-		LastShot = performance.now();
+	if(Engine.IsKeyPressed(" ") && Bullets.length < 4){
 		let newBullet = new CustomShapeObject({shape: BasicSpherePath, name: "Bullet", scale: new Vector2(0.6, 0.6), position: Player.position, drawAsOutline: true, outlineThickness: 2, colliderSize: new Vector2(10, 10)});
 		Engine.AddObject(newBullet);
-		Bullets.push({object: newBullet, direction: Player.localUp, creationTime: LastShot});
+		Bullets.push({object: newBullet, direction: Player.localUp, creationTime: performance.now()});
 	}
 	bulletLogic(delta);
 	asteroidLogic(delta);

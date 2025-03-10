@@ -473,6 +473,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#iskeyreleasedkey" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsKeyReleased(key)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#iskeypressedkey" class="md-nav__link">
     <span class="md-ellipsis">
       IsKeyPressed(key)
@@ -485,6 +494,51 @@
   <a href="#iskeydownkey" class="md-nav__link">
     <span class="md-ellipsis">
       IsKeyDown(key)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ismousereleasedbutton" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsMouseReleased(button)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ismousepressedbutton" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsMousePressed(button)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ismousedownbutton" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsMouseDown(button)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getmouseposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      GetMousePosition()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ismouseovercanvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsMouseOverCanvas()
     </span>
   </a>
   
@@ -1109,6 +1163,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#iskeyreleasedkey" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsKeyReleased(key)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#iskeypressedkey" class="md-nav__link">
     <span class="md-ellipsis">
       IsKeyPressed(key)
@@ -1121,6 +1184,51 @@
   <a href="#iskeydownkey" class="md-nav__link">
     <span class="md-ellipsis">
       IsKeyDown(key)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ismousereleasedbutton" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsMouseReleased(button)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ismousepressedbutton" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsMousePressed(button)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ismousedownbutton" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsMouseDown(button)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#getmouseposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      GetMousePosition()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ismouseovercanvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      IsMouseOverCanvas()
     </span>
   </a>
   
@@ -1335,17 +1443,52 @@
 <li><strong>Size</strong>: The size of the game screen (default is <code>new Vector2(500, 500)</code>).</li>
 </ul>
 <h2 id="instance-methods">Instance Methods</h2>
-<h3 id="iskeypressedkey"><code>IsKeyPressed(key)</code></h3>
-<p>Checks whether a key has just been let go.</p>
+<h3 id="iskeyreleasedkey"><code>IsKeyReleased(key)</code></h3>
+<p>Checks whether a key has just been released.</p>
 <ul>
 <li><strong>key</strong>: string representation of key to check.</li>
-<li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if key has just been let go, else returns <strong>False</strong>.</li>
+<li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if key has just been released, else returns <strong>False</strong>.</li>
+</ul>
+<h3 id="iskeypressedkey"><code>IsKeyPressed(key)</code></h3>
+<p>Checks whether a key has just been pressed.</p>
+<ul>
+<li><strong>key</strong>: string representation of key to check.</li>
+<li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if key has just been pressed, else returns <strong>False</strong>.</li>
 </ul>
 <h3 id="iskeydownkey"><code>IsKeyDown(key)</code></h3>
 <p>Checks whether a key is currently being held down.</p>
 <ul>
 <li><strong>key</strong>: string representation of key to check.</li>
 <li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if key is currently held down, else returns <strong>False</strong>.</li>
+</ul>
+<h3 id="ismousereleasedbutton"><code>IsMouseReleased(button)</code></h3>
+<p>Checks whether a mouse button has just been released.</p>
+<ul>
+<li><strong>button</strong>: string representation of button to check.</li>
+<li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if button has just been released, else returns <strong>False</strong>.</li>
+</ul>
+<h3 id="ismousepressedbutton"><code>IsMousePressed(button)</code></h3>
+<p>Checks whether a mouse button has just been pressed.</p>
+<ul>
+<li><strong>button</strong>: string representation of button to check.</li>
+<li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if button has just been pressed, else returns <strong>False</strong>.</li>
+</ul>
+<h3 id="ismousedownbutton"><code>IsMouseDown(button)</code></h3>
+<p>Checks whether a mouse button is currently being held down.</p>
+<ul>
+<li><strong>button</strong>: string representation of button to check.</li>
+<li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if button is currently held down, else returns <strong>False</strong>.</li>
+</ul>
+<h3 id="getmouseposition"><code>GetMousePosition()</code></h3>
+<p>Returns the current mouse position in screen space.</p>
+<ul>
+<li><strong>Returns</strong>: <code>Vector2</code> mouse position in screen space.</li>
+</ul>
+<h3 id="ismouseovercanvas"><code>IsMouseOverCanvas()</code></h3>
+<p>Returns check of whether the mouse is over the game screen</p>
+<ul>
+<li><strong>key</strong>: string representation of key to check.</li>
+<li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if mouse is over the game screen, else returns <strong>False</strong></li>
 </ul>
 <h3 id="addobjectobject"><code>AddObject(object)</code></h3>
 <p>Adds a <code>GameObject</code> to the engine.</p>
