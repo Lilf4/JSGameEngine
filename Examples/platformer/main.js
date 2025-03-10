@@ -4,7 +4,7 @@ Engine = new GameEngine(
 );
 
 Engine.AddObject(playerChar)
-Engine.AddObject(block)
+CreateLeveL(Engine);
 
 const gravity = 8
 
@@ -14,11 +14,27 @@ Engine.SetLoopFunction(GAMELOGIC);
 Engine.Start();
 
 async function INIT(){
-	// CreateLeveL();
 	setAnimation(playerSheets.idle);
 	setImage('Resources/Block.png');
 	playerChar.Play();
 	playerChar.is_on_floor = true
+}
+
+spriteY = 200-playerChar.spriteSize.y/2
+
+function collideWithPlayer(){
+	let collisions = Engine.GetCollidingObjects(playerChar);
+	if (collisions.length >= 1){
+		for(let i = 0; i < collisions.length; i++){
+			if (collisions[i].tag != "" || null) {
+				if (collisions[i].tag == "static") {
+					console.log("asd")
+
+				}
+			}
+		}
+	}
+
 }
 
 async function GAMELOGIC(delta){
@@ -29,6 +45,8 @@ async function GAMELOGIC(delta){
 		playerChar.velocityY 	= 0
 		playerChar.state 		= "idle"
 	}
+
+	collideWithPlayer();
 
 	if (!UserInput(delta)) {
 		if (playerChar.state != "jumping" || playerChar.is_on_floor) {
@@ -42,7 +60,6 @@ async function GAMELOGIC(delta){
 		setAnimation(playerSheets.fall)
 	} else { playerChar.position.y += playerChar.velocityY }
 
-	spriteY = 200-playerChar.spriteSize.y/2
 	if (playerChar.position.y <= -spriteY) { 
 		playerChar.is_on_floor 	= true 
 		playerChar.position.y 	= -spriteY
