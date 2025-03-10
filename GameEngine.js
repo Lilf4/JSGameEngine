@@ -81,14 +81,17 @@ class GameEngine {
 	 * Creates an instance of the GameEngine.
 	 * @param {HTMLCanvasElement} Canvas - The canvas element used for rendering the game.
 	 * @param {Vector2} [Size=new Vector2(500, 500)] - The size of the game screen.
+	 * @param {Number} [TargetFPS= -1] - Target FPS, -1 = unlimited
 	 */
-	constructor(Canvas, Size = new Vector2(500, 500)){
+	constructor(Canvas, Size = new Vector2(500, 500), TargetFPS = -1){
 		this.canvas = Canvas;
 		this.ctx = this.canvas.getContext('2d');
 		this.canvas.width = Size.x;
 		this.canvas.height = Size.y;
 		this.screenSize = Size;
 		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"});
+		this.TargetFPS = TargetFPS;
+		this.avgFPS = 0;
 
 		this.MouseMoveEventHandler = this.MouseMoveEventHandler.bind(this);
 		this.KeyDownEventHandler = this.KeyDownEventHandler.bind(this);
@@ -504,13 +507,19 @@ class GameEngine {
 		if (!this.running) return;
 		const now = performance.now();
 		let dt = (now - this.lastFrameTime) / 1000;
+		this.avgFPS = 1 / dt;
 		this.lastFrameTime = now;
 
 		if (this.LoopCall != null) await this.LoopCall(dt)
 		
 		this.#DrawScene(dt);
 
-		setTimeout(() => this.#Loop(), 1)
+
+		let sleepTime = 1;
+		if( this.TargetFPS != -1){
+			sleepTime = (1 / this.TargetFPS - (performance.now() - now) / 1000) * 1000;
+		}
+		setTimeout(() => this.#Loop(), sleepTime)
 	}
 
 	/**
