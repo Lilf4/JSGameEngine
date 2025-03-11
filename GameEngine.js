@@ -877,16 +877,6 @@ class ImageAnimObject extends VisibleObject{
 	} = {})
 	{
 		super(GameObjectOptions)
-		if(image != null){
-			this.image = image;
-		}
-		else if(imageUrl != null)
-		{
-			this.imageUrl = imageUrl;
-		}
-		else{
-			this.image = new Image();
-		}
 		this.horizontalStacked = horizontalStacked;
 		this.spriteColRowCount = spriteColRowCount;
 		this.overrideDisplaySize = overrideDisplaySize,
@@ -901,8 +891,18 @@ class ImageAnimObject extends VisibleObject{
 		this.isPlaying = false;
 		this.timePassed = 0;
 		this.totalAnimDuration = 0;
-		this.#calcAnimTime();
-		this.#calcSpriteSize();
+		if(image != null){
+			this.image = image;
+			this.#calcAnimTime();
+			this.#calcSpriteSize();
+		}
+		else if(imageUrl != null)
+		{
+			this.imageUrl = imageUrl;
+		}
+		else{
+			this.image = new Image();
+		}
 	}
 
 	set imageUrl(val){
@@ -946,6 +946,10 @@ class ImageAnimObject extends VisibleObject{
 	 * Calculates sprite size based on the coloum and row counts
 	 */
 	#calcSpriteSize(){
+		if(this.image == undefined){
+			this.spriteSize = new Vector2(0,0)
+			return
+		}
 		this.spriteSize = new Vector2(
 			this.image.width / this.spriteColRowCount.x,
 			this.image.height / this.spriteColRowCount.y
