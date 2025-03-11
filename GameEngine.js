@@ -1,7 +1,6 @@
 /*
  * TODO
  * Way too many things ;-;
- * Input Handler
  * Don't draw objects not currently on screen
  * */
 const BasicSquarePath = new Path2D();
@@ -71,6 +70,8 @@ class GameEngine {
 	background = 'black';
 	lastFrameTime = performance.now();
 	GameObjectDict = {}
+	GameObjectUIRenderList = []
+	GameObjectWorldRenderList = []
 	GameObjectList = []
 	KeysDown = {}
 	KeysPressed = {}
@@ -80,14 +81,17 @@ class GameEngine {
 	 * Creates an instance of the GameEngine.
 	 * @param {HTMLCanvasElement} Canvas - The canvas element used for rendering the game.
 	 * @param {Vector2} [Size=new Vector2(500, 500)] - The size of the game screen.
+	 * @param {Number} [TargetFPS= -1] - Target FPS, -1 = unlimited
 	 */
-	constructor(Canvas, Size = new Vector2(500, 500)){
+	constructor(Canvas, Size = new Vector2(500, 500), TargetFPS = -1){
 		this.canvas = Canvas;
 		this.ctx = this.canvas.getContext('2d');
 		this.canvas.width = Size.x;
 		this.canvas.height = Size.y;
 		this.screenSize = Size;
 		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"});
+		this.TargetFPS = TargetFPS;
+		this.avgFPS = 0;
 
 		this.MouseMoveEventHandler = this.MouseMoveEventHandler.bind(this);
 		this.KeyDownEventHandler = this.KeyDownEventHandler.bind(this);
@@ -261,6 +265,17 @@ class GameEngine {
 		return this.#mouseState.isOverCanvas;
 	}
 
+	#cursorObject = new GameObject({position: new Vector2(0,0), colliderSize: new Vector2(1,1)})
+	/**
+	 * Returns a list of gameobjects that the mouse is currently over/colliding with
+	 * @returns {GameObject[]} - list of colliding GameObjects
+	 */
+	GetMouseCollisions(){
+		this.#cursorObject.position = this.screenToWorldSpace(this.#mouseState.screenPosition);
+		return this.GetCollidingObjects(this.#cursorObject)
+	}
+
+
 	/**
 	 * Renderes current game frame
 	 * @param {Number} delta - time since last frame
@@ -276,7 +291,9 @@ class GameEngine {
 		this.ctx.scale(this.CameraObject.scale.x, this.CameraObject.scale.y);
 		
 		this.ctx.translate(-this.ctx.canvas.width / 2, -this.ctx.canvas.height / 2);
-		this.GameObjectList.forEach(object => {
+
+		//WORLD PASS
+		this.GameObjectWorldRenderList.forEach(object => {
 			if (!(object instanceof VisibleObject) || !object.visible) {return;}
 
 			var objScreenPos = this.worldToScreenSpace(object.position);
@@ -306,15 +323,46 @@ class GameEngine {
 			}
 		});
 		this.ctx.restore();
+		//UI PASS
+		this.GameObjectUIRenderList.forEach(object => {
+			if (!(object instanceof VisibleObject) || !object.visible) {return;}
+
+			var objScreenPos = object.position;
+
+			this.ctx.save();
+			this.ctx.translate(objScreenPos.x, objScreenPos.y);
+			this.ctx.rotate(object.rotation * Math.PI / 180);
+			this.ctx.scale(object.scale.x, object.scale.y);
+
+			object.draw(delta, this.ctx);
+
+			this.ctx.restore();
+
+			if (object.drawCollider){
+				let colliderPos = this.worldToScreenSpace(object.movedColliderPosition)
+				this.ctx.save();
+				this.ctx.translate(colliderPos.x, colliderPos.y);
+				this.ctx.rotate(object.rotation * Math.PI / 180);
+				this.ctx.scale(object.scale.x, object.scale.y);
+				this.ctx.beginPath();
+				this.ctx.strokeStyle = 'red';
+				this.ctx.lineWidth = 1;
+				this.ctx.rect(-(object.colliderSize.x / 2), -(object.colliderSize.y / 2), object.colliderSize.x, object.colliderSize.y)
+				this.ctx.closePath();
+				this.ctx.stroke();
+				this.ctx.restore();
+			}
+		});
 	}
 
 	/**
 	 * Adds a GameObject to the engine.
 	 * Ensures the object is an instance of GameObject (or a subclass of it) and gives it a unique ID.
 	 * @param {GameObject} object - The GameObject instance to add to the engine.
+	 * @param {string} renderMode - The render mode/pass the object should be under (world/ui)
 	 * @throws {Error} If the object is not an instance of GameObject or its subclass.
 	 */
-	AddObject(object){
+	AddObject(object, renderMode = 'world'){
 		if (!(object instanceof GameObject)) {
 			throw new Error(`The object must be an instance of GameObject or a subclass of it, but received: ${object}`);
 		}
@@ -324,6 +372,12 @@ class GameEngine {
 		} while(uuid in this.GameObjectDict);
 		object.id = uuid
 		this.GameObjectDict[uuid] = object
+		if(renderMode == 'world'){
+			this.GameObjectWorldRenderList.push(object)
+		}
+		else if(renderMode == 'ui'){
+			this.GameObjectUIRenderList.push(object);
+		}
 		this.#CreateObjectRenderOrderList()
 	}
 
@@ -334,6 +388,16 @@ class GameEngine {
 	RemObject(object){
 		if(object.id in this.GameObjectDict){
 			delete this.GameObjectDict[object.id]
+
+			let objIndex = this.GameObjectUIRenderList.findIndex(o => o.id == object.id)
+			if(objIndex >= 0){
+				this.GameObjectUIRenderList.splice(objIndex, 1);
+			}
+
+			objIndex = this.GameObjectWorldRenderList.findIndex(o => o.id == object.id)
+			if(objIndex >= 0){
+				this.GameObjectWorldRenderList.splice(objIndex, 1);
+			}
 		}
 		this.#CreateObjectRenderOrderList();
 	}
@@ -344,6 +408,8 @@ class GameEngine {
 	#CreateObjectRenderOrderList(){
 		this.GameObjectList = [];
 		this.GameObjectList = Object.values(this.GameObjectDict).sort((a, b) => b.layer - a.layer);
+		this.GameObjectUIRenderList.sort((a, b) => b.layer - a.layer);
+		this.GameObjectWorldRenderList.sort((a, b) => b.layer - a.layer);
 	}
 
 	/**
@@ -441,13 +507,19 @@ class GameEngine {
 		if (!this.running) return;
 		const now = performance.now();
 		let dt = (now - this.lastFrameTime) / 1000;
+		this.avgFPS = 1 / dt;
 		this.lastFrameTime = now;
 
 		if (this.LoopCall != null) await this.LoopCall(dt)
 		
 		this.#DrawScene(dt);
 
-		setTimeout(() => this.#Loop(), 1)
+
+		let sleepTime = 1;
+		if( this.TargetFPS != -1){
+			sleepTime = (1 / this.TargetFPS - (performance.now() - now) / 1000) * 1000;
+		}
+		setTimeout(() => this.#Loop(), sleepTime)
 	}
 
 	/**
@@ -492,9 +564,19 @@ class GameEngine {
 	 */
 	screenToWorldSpace(pos){
 		var relativePos = Vector2.sub(pos, Vector2.div(this.screenSize, 2));
+
 		relativePos = Vector2.add(relativePos, this.CameraObject.position);
-		relativePos.y *= -1;
-		return relativePos
+
+		var angle = (this.CameraObject.rotation * Math.PI) / 180;
+		var cosA = Math.cos(angle);
+    	var sinA = -Math.sin(angle);
+
+		var rotatedX = relativePos.x * cosA - relativePos.y * sinA;
+    	var rotatedY = relativePos.x * sinA + relativePos.y * cosA;
+
+		var rotatedPos = new Vector2(rotatedX, -rotatedY);
+		
+		return rotatedPos
 	}
 }
 
@@ -718,6 +800,7 @@ class ImageObject extends VisibleObject{
 	}
 
 	draw(dt, ctx){
+		if(this.image == undefined) return;
 		var ImageSize = this.overrideDisplaySize == null ? new Vector2(this.image.width, this.image.height) : this.overrideDisplaySize;
 		var SourceImagePosition = this.overrideImgSourcePosition == null ? Vector2.Zero : this.overrideImgSourcePosition;
 		var SourceImageSize = this.overrideImgSourceSize == null ? new Vector2(this.image.width, this.image.height) : this.overrideImgSourceSize;
@@ -794,16 +877,6 @@ class ImageAnimObject extends VisibleObject{
 	} = {})
 	{
 		super(GameObjectOptions)
-		if(image != null){
-			this.image = image;
-		}
-		else if(imageUrl != null)
-		{
-			this.imageUrl = imageUrl;
-		}
-		else{
-			this.image = new Image();
-		}
 		this.horizontalStacked = horizontalStacked;
 		this.spriteColRowCount = spriteColRowCount;
 		this.overrideDisplaySize = overrideDisplaySize,
@@ -818,8 +891,18 @@ class ImageAnimObject extends VisibleObject{
 		this.isPlaying = false;
 		this.timePassed = 0;
 		this.totalAnimDuration = 0;
-		this.#calcAnimTime();
-		this.#calcSpriteSize();
+		if(image != null){
+			this.image = image;
+			this.#calcAnimTime();
+			this.#calcSpriteSize();
+		}
+		else if(imageUrl != null)
+		{
+			this.imageUrl = imageUrl;
+		}
+		else{
+			this.image = new Image();
+		}
 	}
 
 	set imageUrl(val){
@@ -863,6 +946,10 @@ class ImageAnimObject extends VisibleObject{
 	 * Calculates sprite size based on the coloum and row counts
 	 */
 	#calcSpriteSize(){
+		if(this.image == undefined){
+			this.spriteSize = new Vector2(0,0)
+			return
+		}
 		this.spriteSize = new Vector2(
 			this.image.width / this.spriteColRowCount.x,
 			this.image.height / this.spriteColRowCount.y
@@ -942,6 +1029,7 @@ class ImageAnimObject extends VisibleObject{
 	}
 
 	draw(dt, ctx){
+		if(this.image == undefined) return;
 		var displaySize = this.overrideDisplaySize == null ? this.spriteSize : this.overrideDisplaySize;
 		ctx.drawImage(
 			this.image, 
