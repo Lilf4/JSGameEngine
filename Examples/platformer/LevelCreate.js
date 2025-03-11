@@ -3,9 +3,16 @@
 const level =   "XXXBBBBBXXX";
 
 function CreateLeveL(object_size = new Vector2(16,16)) {
-    Engine.AddObject(block)
     const parts = level.split('');
+    let blocks = [];
     for (let i = 0; i < parts.length; i++) {
-        // console.log(i)
+        if (parts[i] == 'B') {
+
+            let newBlock = block;
+            newBlock.position = new Vector2(-Engine.screenSize.x/2 + 48*i, 5);
+            blocks.push(newBlock)
+        }
     }
+    console.log(blocks.length)
+    Engine.AddObject(blocks[0])
 }

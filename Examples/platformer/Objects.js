@@ -3,12 +3,13 @@ let block = new ImageObject({
     position: new Vector2(0, 10),
     drawCollider: true,
     colliderSize: new Vector2(48, 48),
-    tags: ["STATIC"]
+    tags: ["STATIC"],
+    imageUrl: 'Resources/Block.png'
 });
 
-// (async function () {
-//     block.image = await resManager.LoadImage('Resources/Block.png');
-// })();
-async function setImage(image){
-    block.image = await resManager.LoadImage(image);
-}
+// // (async function () {
+// //     block.image = await resManager.LoadImage('Resources/Block.png');
+// // })();
+// async function setImage(image){
+//     block.image = await resManager.LoadImage(image);
+// }

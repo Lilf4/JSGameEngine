@@ -15,7 +15,6 @@ Engine.Start();
 
 async function INIT(){
 	setAnimation(playerSheets.idle);
-	setImage('Resources/Block.png');
 	playerChar.Play();
 	playerChar.is_on_floor = true
 }
