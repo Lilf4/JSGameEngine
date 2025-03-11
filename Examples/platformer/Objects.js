@@ -3,7 +3,7 @@ let block = new ImageObject({
     position: new Vector2(0, 10),
     drawCollider: true,
     colliderSize: new Vector2(48, 48),
-    tag: "static"
+    tags: ["STATIC"]
 });
 
 // (async function () {

@@ -8,7 +8,8 @@ let playerChar = new ImageAnimObject({
 	state			: ["idle", "moving", "jumping"],
 	is_on_floor		: true,
 	velocityY		: 0,
-	currentFrame	: new Vector2(0, 0)
+	currentFrame	: new Vector2(0, 0),
+	collidingDownCheck: 2
 });
 
 // Player speed
