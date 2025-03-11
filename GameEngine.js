@@ -800,6 +800,7 @@ class ImageObject extends VisibleObject{
 	}
 
 	draw(dt, ctx){
+		if(this.image == undefined) return;
 		var ImageSize = this.overrideDisplaySize == null ? new Vector2(this.image.width, this.image.height) : this.overrideDisplaySize;
 		var SourceImagePosition = this.overrideImgSourcePosition == null ? Vector2.Zero : this.overrideImgSourcePosition;
 		var SourceImageSize = this.overrideImgSourceSize == null ? new Vector2(this.image.width, this.image.height) : this.overrideImgSourceSize;
@@ -1024,6 +1025,7 @@ class ImageAnimObject extends VisibleObject{
 	}
 
 	draw(dt, ctx){
+		if(this.image == undefined) return;
 		var displaySize = this.overrideDisplaySize == null ? this.spriteSize : this.overrideDisplaySize;
 		ctx.drawImage(
 			this.image, 
