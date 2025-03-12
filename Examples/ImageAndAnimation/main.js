@@ -4,7 +4,6 @@ Engine = new GameEngine(
 );
 
 let RepeatingImageObj = new ImageObject({
-	useSourceSize: false, 
 	position: new Vector2(-400, 300), 
 	overrideDisplaySize: new Vector2(64, 64), 
 	repeat: true
@@ -13,7 +12,6 @@ Engine.AddObject(RepeatingImageObj);
 
 let ResizingImageObj = new ImageObject({
 	imageUrl: 'Resources/TestImage.png',
-	useSourceSize: false, 
 	position: new Vector2(-400, 150), 
 	overrideDisplaySize: new Vector2(64, 64), 
 	repeat: false
