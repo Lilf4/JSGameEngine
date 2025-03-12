@@ -92,6 +92,7 @@ class GameEngine {
 		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"});
 		this.TargetFPS = TargetFPS;
 		this.avgFPS = 0;
+		this.inFocus = true;
 
 		this.MouseMoveEventHandler = this.MouseMoveEventHandler.bind(this);
 		this.KeyDownEventHandler = this.KeyDownEventHandler.bind(this);
@@ -121,10 +122,18 @@ class GameEngine {
 	 * @param {MouseEvent} event
 	 */
 	MouseDownEventHandler(event){
-		event.preventDefault();
+		if(this.inFocus){
+			event.preventDefault();
+		}
 		let ButtonCode = `MOUSE${event.button}`
 		if(!(ButtonCode in this.KeysDown)){
 			this.KeysDown[ButtonCode] = { pressed: performance.now(), checked: false}
+		}
+		if(this.#mouseState.isOverCanvas){
+			this.inFocus = true;
+		}
+		else{
+			this.inFocus = false;
 		}
 	}
 
@@ -133,7 +142,9 @@ class GameEngine {
 	 * @param {MouseEvent} event
 	 */
 	MouseUpEventHandler(event){
-		event.preventDefault();
+		if(this.inFocus){
+			event.preventDefault();
+		}
 		let ButtonCode = `MOUSE${event.button}`
 		if(ButtonCode in this.KeysDown){
 			this.KeysPressed[ButtonCode] = { pressed: performance.now() };
@@ -152,7 +163,9 @@ class GameEngine {
 	 * @param {KeyboardEvent} event
 	 */
 	KeyDownEventHandler(event){
-		event.preventDefault();
+		if(this.inFocus){
+			event.preventDefault();
+		}
 		if(!(event.key in this.KeysDown)){
 			this.KeysDown[event.key] = { pressed: performance.now(), checked: false}
 		}
@@ -163,7 +176,9 @@ class GameEngine {
 	 * @param {KeyboardEvent} event
 	 */
 	KeyUpEventHandler(event){
-		event.preventDefault();
+		if(this.inFocus){
+			event.preventDefault();
+		}
 		if(event.key in this.KeysDown){
 			this.KeysPressed[event.key] = { pressed: performance.now() };
 			delete this.KeysDown[event.key];
