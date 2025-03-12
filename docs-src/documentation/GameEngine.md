@@ -59,10 +59,16 @@ Returns check of whether the mouse is over the game screen
 - **key**: string representation of key to check.
 - **Returns**: `boolean` **True** if mouse is over the game screen, else returns **False**
 
-### `AddObject(object)`
+### `GetMouseCollisions()`
+Returns a list of gameobjects that the mouse is currently over/colliding with
+
+- **Returns**: `GameObject[]` list of colliding GameObjects
+
+### `AddObject(object, string?)`
 Adds a `GameObject` to the engine.
 
 - **object**: The `GameObject` instance to add to the engine.
+- **string**: The render mode/pass the object should be under (world/ui)
 - **Throws**: `Error` if the object is not an instance of `GameObject` or its subclass.
 
 ### `RemObject(object)`

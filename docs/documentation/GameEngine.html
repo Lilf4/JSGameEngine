@@ -545,9 +545,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#addobjectobject" class="md-nav__link">
+  <a href="#getmousecollisions" class="md-nav__link">
     <span class="md-ellipsis">
-      AddObject(object)
+      GetMouseCollisions()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#addobjectobject-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      AddObject(object, string?)
     </span>
   </a>
   
@@ -1235,9 +1244,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#addobjectobject" class="md-nav__link">
+  <a href="#getmousecollisions" class="md-nav__link">
     <span class="md-ellipsis">
-      AddObject(object)
+      GetMouseCollisions()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#addobjectobject-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      AddObject(object, string?)
     </span>
   </a>
   
@@ -1490,10 +1508,16 @@
 <li><strong>key</strong>: string representation of key to check.</li>
 <li><strong>Returns</strong>: <code>boolean</code> <strong>True</strong> if mouse is over the game screen, else returns <strong>False</strong></li>
 </ul>
-<h3 id="addobjectobject"><code>AddObject(object)</code></h3>
+<h3 id="getmousecollisions"><code>GetMouseCollisions()</code></h3>
+<p>Returns a list of gameobjects that the mouse is currently over/colliding with</p>
+<ul>
+<li><strong>Returns</strong>: <code>GameObject[]</code> list of colliding GameObjects</li>
+</ul>
+<h3 id="addobjectobject-string"><code>AddObject(object, string?)</code></h3>
 <p>Adds a <code>GameObject</code> to the engine.</p>
 <ul>
 <li><strong>object</strong>: The <code>GameObject</code> instance to add to the engine.</li>
+<li><strong>string</strong>: The render mode/pass the object should be under (world/ui)</li>
 <li><strong>Throws</strong>: <code>Error</code> if the object is not an instance of <code>GameObject</code> or its subclass.</li>
 </ul>
 <h3 id="remobjectobject"><code>RemObject(object)</code></h3>
