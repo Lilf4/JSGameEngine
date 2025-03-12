@@ -895,6 +895,7 @@ class ImageAnimObject extends VisibleObject{
 			this.image = image;
 			this.#calcAnimTime();
 			this.#calcSpriteSize();
+			this.#updateFrame();
 		}
 		else if(imageUrl != null)
 		{
@@ -908,7 +909,12 @@ class ImageAnimObject extends VisibleObject{
 	set imageUrl(val){
 		(async function test(val) {
 			return (await resManager.LoadImage(val))
-		})(val).then((v) => this.image = v);
+		})(val).then((v) => {
+			this.image = v;
+			this.#calcAnimTime();
+			this.#calcSpriteSize();
+			this.#updateFrame();
+		});
 	}
 
 	get imageUrl(){
