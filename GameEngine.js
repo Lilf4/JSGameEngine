@@ -76,6 +76,24 @@ class GameEngine {
 	KeysDown = {}
 	KeysPressed = {}
 	ClickLimit = 200;
+	mouseMovement = new Vector2();
+	vertexShader = `
+            attribute vec2 aPosition;
+            attribute vec2 aTexCoord;
+            varying vec2 vTexCoord;
+            void main() {
+                gl_Position = vec4(aPosition, 0.0, 1.0);
+                vTexCoord = aTexCoord;
+            }
+        `;
+	fragmentShader = `
+            precision mediump float;
+            varying vec2 vTexCoord;
+            uniform sampler2D uTexture;
+            void main() {
+                gl_FragColor = texture2D(uTexture, vTexCoord);
+            }
+        `;
 
 	/**
 	 * Creates an instance of the GameEngine.
@@ -83,12 +101,43 @@ class GameEngine {
 	 * @param {Vector2} [Size=new Vector2(500, 500)] - The size of the game screen.
 	 * @param {Number} [TargetFPS= -1] - Target FPS, -1 = unlimited
 	 */
-	constructor(Canvas, Size = new Vector2(500, 500), TargetFPS = -1){
-		this.canvas = Canvas;
-		this.ctx = this.canvas.getContext('2d');
+	constructor(Canvas, Size = new Vector2(500, 500), TargetFPS = -1, PostProcessing = false){
+		this.canvas = null;
+		this.ctx = null;
+		this.postProcessingCanvas = null;
+		this.postProcessingCtx = null;
+		this.PostProcessTexture = null;
+		this.PostProcessingProgram = null;
+		this.PostProcessing = PostProcessing;
+		this.PostProcessingBuffer = null;
+
+		this.screenSize = Size;
+		if(this.PostProcessing){
+			this.canvas = new OffscreenCanvas(this.screenSize.x, this.screenSize.y);
+			this.ctx = this.canvas.getContext("2d");
+
+			this.postProcessingCanvas = Canvas;
+			this.postProcessingCtx = Canvas.getContext("webgl");
+
+			this.PostProcessTexture = this.postProcessingCtx.createTexture();
+			this.postProcessingCtx.bindTexture(this.postProcessingCtx.TEXTURE_2D, this.PostProcessTexture);
+
+			this.postProcessingCtx.texImage2D(this.postProcessingCtx.TEXTURE_2D, 0, this.postProcessingCtx.RGBA, this.postProcessingCtx.RGBA, this.postProcessingCtx.UNSIGNED_BYTE, this.canvas);
+			
+			this.PostProcessingProgram = this.postProcessingCtx.createProgram();
+			this.PostProcessingBuffer = this.postProcessingCtx.createBuffer();
+			console.log(this.postProcessingCanvas)
+			console.log(this.postProcessingCtx)
+			this.postProcessingCanvas.width = Size.x;
+			this.postProcessingCanvas.height = Size.y;
+			this.postProcessingCtx.viewport(0, 0, this.postProcessingCanvas.width, this.postProcessingCanvas.height);
+		}
+		else{
+			this.canvas = Canvas;
+			this.ctx = Canvas.getContext("2d");
+		}
 		this.canvas.width = Size.x;
 		this.canvas.height = Size.y;
-		this.screenSize = Size;
 		this.CameraObject = new GameObject({colliderSize: Size, name: "Camera"});
 		this.TargetFPS = TargetFPS;
 		this.avgFPS = 0;
@@ -104,6 +153,29 @@ class GameEngine {
 		addEventListener("mouseup", this.MouseUpEventHandler);
 		addEventListener("keydown", this.KeyDownEventHandler);
 		addEventListener("keyup", this.KeyUpEventHandler);
+
+		
+	}
+
+	#positionLoc = null;
+	#texCoordLoc = null;
+
+	#vertices = new Float32Array([
+		-1, -1,  0, 1,  // Bottom-left
+		 1, -1,  1, 1,  // Bottom-right
+		-1,  1,  0, 0,  // Top-left
+		 1,  1,  1, 0   // Top-right
+	]);
+
+	#compileShader(gl, source, type) {
+		const shader = gl.createShader(type);
+		gl.shaderSource(shader, source);
+		gl.compileShader(shader);
+		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+			console.error("Shader compile error:", gl.getShaderInfoLog(shader));
+			return null;
+		}
+		return shader;
 	}
 
 	#mouseState = {
@@ -111,8 +183,18 @@ class GameEngine {
 		isOverCanvas: false
 	}
 
+	#vertexShader = null
+	#fragmentShader = null
+
 	MouseMoveEventHandler(event){
-		let rect = this.canvas.getBoundingClientRect();
+		this.mouseMovement = this.mouseMovement.add(new Vector2(event.movementX, event.movementY));
+		let rect = null
+		if(this.PostProcessing){
+			rect = this.postProcessingCanvas.getBoundingClientRect();
+		}
+		else{
+			rect = this.canvas.getBoundingClientRect();
+		}
 		this.#mouseState.screenPosition = new Vector2(event.clientX - rect.left, event.clientY - rect.top)
 		this.#mouseState.isOverCanvas = event.target == this.canvas || (this.#mouseState.screenPosition.x >= 0 && this.#mouseState.screenPosition.x <= this.screenSize.y && this.#mouseState.screenPosition.y >= 0 && this.#mouseState.screenPosition.y <= this.screenSize.y);
 	}
@@ -273,6 +355,27 @@ class GameEngine {
 	}
 
 	/**
+	 * 
+	 */
+	async LockPointer(){
+		await this.canvas.requestPointerLock({})
+	}
+
+	/**
+	 * 
+	 */
+	async ReleasePointer(){
+		await document.exitPointerLock({})
+	}
+
+	/**
+	 * 
+	 */
+	get pointerLockState() {
+		return document.pointerLockElement === this.canvas;
+	}
+
+	/**
 	 * Returns check of whether the mouse is over the game screen
 	 * @returns {boolean} - **True** if mouse is over the game screen, else returns **False**
 	 */
@@ -368,6 +471,21 @@ class GameEngine {
 				this.ctx.restore();
 			}
 		});
+
+		if(this.PostProcessing){
+			this.postProcessingCtx.bindTexture(this.postProcessingCtx.TEXTURE_2D, this.PostProcessTexture);
+			this.postProcessingCtx.texSubImage2D(this.postProcessingCtx.TEXTURE_2D, 0, 0, 0, this.postProcessingCtx.RGBA, this.postProcessingCtx.UNSIGNED_BYTE, this.canvas);
+			
+			this.postProcessingCtx.clear(this.postProcessingCtx.COLOR_BUFFER_BIT);
+            this.postProcessingCtx.drawArrays(this.postProcessingCtx.TRIANGLE_STRIP, 0, 4);
+
+			this.postProcessingCtx.uniform1f(this.postProcessingCtx.getUniformLocation(this.PostProcessingProgram, "uTime"), (performance.now() - this.#startTime) / 1000.0);
+
+			let err = this.postProcessingCtx.getError();
+			if (err !== this.postProcessingCtx.NO_ERROR) {
+				console.error("WebGL Error:", err);
+			}
+		}
 	}
 
 	/**
@@ -506,10 +624,54 @@ class GameEngine {
 		return true; // If no gaps, collision detected
 	}	
 
+	#startTime = 0
+
 	/**
 	 * Starts engine logic
 	 */
 	async Start(){
+		this.#startTime = performance.now()
+		if(this.PostProcessing){
+			this.#vertexShader = this.#compileShader(this.postProcessingCtx, this.vertexShader, this.postProcessingCtx.VERTEX_SHADER);
+			this.#fragmentShader = this.#compileShader(this.postProcessingCtx, this.fragmentShader, this.postProcessingCtx.FRAGMENT_SHADER);
+		
+			this.postProcessingCtx.attachShader(this.PostProcessingProgram, this.#vertexShader);
+			this.postProcessingCtx.attachShader(this.PostProcessingProgram, this.#fragmentShader);
+			this.postProcessingCtx.linkProgram(this.PostProcessingProgram);
+	
+			if (!this.postProcessingCtx.getProgramParameter(this.PostProcessingProgram, this.postProcessingCtx.LINK_STATUS)) {
+				console.error("Shader program linking failed:", this.postProcessingCtx.getProgramInfoLog(this.PostProcessingProgram));
+				return;
+			}
+			
+			this.postProcessingCtx.useProgram(this.PostProcessingProgram);
+			this.postProcessingCtx.activeTexture(this.postProcessingCtx.TEXTURE0);
+			this.postProcessingCtx.bindTexture(this.postProcessingCtx.TEXTURE_2D, this.PostProcessTexture);
+			this.postProcessingCtx.uniform2fv(this.postProcessingCtx.getUniformLocation(this.PostProcessingProgram, "uResolution"), [this.screenSize.x, this.screenSize.y]);
+			this.postProcessingCtx.uniform1i(this.postProcessingCtx.getUniformLocation(this.PostProcessingProgram, "uTexture"), 0);
+			
+			this.postProcessingCtx.bindBuffer(this.postProcessingCtx.ARRAY_BUFFER, this.PostProcessingBuffer);
+			this.postProcessingCtx.bufferData(this.postProcessingCtx.ARRAY_BUFFER, this.#vertices, this.postProcessingCtx.STATIC_DRAW);
+			this.#positionLoc = this.postProcessingCtx.getAttribLocation(this.PostProcessingProgram, "aPosition");
+			this.#texCoordLoc = this.postProcessingCtx.getAttribLocation(this.PostProcessingProgram, "aTexCoord");
+	
+			this.postProcessingCtx.vertexAttribPointer(this.#positionLoc, 2, this.postProcessingCtx.FLOAT, false, 16, 0);
+			this.postProcessingCtx.enableVertexAttribArray(this.#positionLoc);
+			this.postProcessingCtx.vertexAttribPointer(this.#texCoordLoc, 2, this.postProcessingCtx.FLOAT, false, 16, 8);
+			this.postProcessingCtx.enableVertexAttribArray(this.#texCoordLoc);
+	
+			this.postProcessingCtx.bindTexture(this.postProcessingCtx.TEXTURE_2D, this.PostProcessTexture);
+			this.postProcessingCtx.texParameteri(this.postProcessingCtx.TEXTURE_2D, this.postProcessingCtx.TEXTURE_MIN_FILTER, this.postProcessingCtx.LINEAR);
+			this.postProcessingCtx.texParameteri(this.postProcessingCtx.TEXTURE_2D, this.postProcessingCtx.TEXTURE_MAG_FILTER, this.postProcessingCtx.LINEAR);
+			this.postProcessingCtx.texParameteri(this.postProcessingCtx.TEXTURE_2D, this.postProcessingCtx.TEXTURE_WRAP_S, this.postProcessingCtx.CLAMP_TO_EDGE);
+			this.postProcessingCtx.texParameteri(this.postProcessingCtx.TEXTURE_2D, this.postProcessingCtx.TEXTURE_WRAP_T, this.postProcessingCtx.CLAMP_TO_EDGE);
+			this.postProcessingCtx.pixelStorei(this.postProcessingCtx.UNPACK_FLIP_Y_WEBGL, false);
+
+			// Enable blending in your rendering code
+			this.postProcessingCtx.enable(this.postProcessingCtx.BLEND);
+			this.postProcessingCtx.blendFunc(this.postProcessingCtx.SRC_ALPHA, this.postProcessingCtx.ONE_MINUS_SRC_ALPHA);
+		}
+
 		this.running = true;
 		if (this.InitCall != null) await this.InitCall()
 		this.#Loop()
@@ -529,6 +691,7 @@ class GameEngine {
 		
 		this.#DrawScene(dt);
 
+		this.mouseMovement = Vector2.Zero;
 
 		let sleepTime = 1;
 		if( this.TargetFPS != -1){
