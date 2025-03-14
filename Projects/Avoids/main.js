@@ -12,8 +12,7 @@ function CreateTargets(amount = 5) {
 		target = new CustomShapeObject({
 			shape: BasicSpherePath,
 			scale: new Vector2(5, 5),
-			drawCollider: true,
-			tags: ['TARGET']
+			tags: ['TARGET', 10],
 		})
 		ListOfTargets.push(target);
 	}
@@ -58,8 +57,8 @@ async function GAMELOGIC(delta){
 		if (Engine.GetCollidingObjects(Player).length > 0){
 			let colObj = Engine.GetCollidingObjects(Player)[0];
 			if (colObj.tags.includes("TARGET")) {
+				t.text = `Score: ${score += colObj.tags[1]}`;
 				Engine.RemObject(colObj)
-				t.text = `Score: ${score += 10}`;
 			}
 		}
 	}
