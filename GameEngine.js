@@ -177,6 +177,32 @@ class GameEngine {
 		return shader;
 	}
 
+	RecompileShader(){
+		this.#vertexShader = this.#compileShader(this.postProcessingCtx, this.vertexShader, this.postProcessingCtx.VERTEX_SHADER);
+		this.#fragmentShader = this.#compileShader(this.postProcessingCtx, this.fragmentShader, this.postProcessingCtx.FRAGMENT_SHADER);
+
+		if (this.PostProcessingProgram) {
+			this.postProcessingCtx.deleteProgram(this.PostProcessingProgram);
+		}
+
+		this.PostProcessingProgram = this.postProcessingCtx.createProgram();
+
+		this.postProcessingCtx.attachShader(this.PostProcessingProgram, this.#vertexShader);
+		this.postProcessingCtx.attachShader(this.PostProcessingProgram, this.#fragmentShader);
+		this.postProcessingCtx.linkProgram(this.PostProcessingProgram);
+
+		if (!this.postProcessingCtx.getProgramParameter(this.PostProcessingProgram, this.postProcessingCtx.LINK_STATUS)) {
+			console.error("Shader program linking failed:", this.postProcessingCtx.getProgramInfoLog(this.PostProcessingProgram));
+			return;
+		}
+		this.postProcessingCtx.useProgram(this.PostProcessingProgram);
+		this.postProcessingCtx.uniform2fv(this.postProcessingCtx.getUniformLocation(this.PostProcessingProgram, "uResolution"), [this.screenSize.x, this.screenSize.y]);
+		this.postProcessingCtx.uniform1i(this.postProcessingCtx.getUniformLocation(this.PostProcessingProgram, "uTexture"), 0);
+		
+		this.#positionLoc = this.postProcessingCtx.getAttribLocation(this.PostProcessingProgram, "aPosition");
+		this.#texCoordLoc = this.postProcessingCtx.getAttribLocation(this.PostProcessingProgram, "aTexCoord");
+	}
+
 	#mouseState = {
 		screenPosition: new Vector2(),
 		isOverCanvas: false
@@ -631,28 +657,12 @@ class GameEngine {
 	async Start(){
 		this.#startTime = performance.now()
 		if(this.PostProcessing){
-			this.#vertexShader = this.#compileShader(this.postProcessingCtx, this.vertexShader, this.postProcessingCtx.VERTEX_SHADER);
-			this.#fragmentShader = this.#compileShader(this.postProcessingCtx, this.fragmentShader, this.postProcessingCtx.FRAGMENT_SHADER);
-		
-			this.postProcessingCtx.attachShader(this.PostProcessingProgram, this.#vertexShader);
-			this.postProcessingCtx.attachShader(this.PostProcessingProgram, this.#fragmentShader);
-			this.postProcessingCtx.linkProgram(this.PostProcessingProgram);
-	
-			if (!this.postProcessingCtx.getProgramParameter(this.PostProcessingProgram, this.postProcessingCtx.LINK_STATUS)) {
-				console.error("Shader program linking failed:", this.postProcessingCtx.getProgramInfoLog(this.PostProcessingProgram));
-				return;
-			}
-			
-			this.postProcessingCtx.useProgram(this.PostProcessingProgram);
+			this.RecompileShader();
 			this.postProcessingCtx.activeTexture(this.postProcessingCtx.TEXTURE0);
 			this.postProcessingCtx.bindTexture(this.postProcessingCtx.TEXTURE_2D, this.PostProcessTexture);
-			this.postProcessingCtx.uniform2fv(this.postProcessingCtx.getUniformLocation(this.PostProcessingProgram, "uResolution"), [this.screenSize.x, this.screenSize.y]);
-			this.postProcessingCtx.uniform1i(this.postProcessingCtx.getUniformLocation(this.PostProcessingProgram, "uTexture"), 0);
 			
 			this.postProcessingCtx.bindBuffer(this.postProcessingCtx.ARRAY_BUFFER, this.PostProcessingBuffer);
 			this.postProcessingCtx.bufferData(this.postProcessingCtx.ARRAY_BUFFER, this.#vertices, this.postProcessingCtx.STATIC_DRAW);
-			this.#positionLoc = this.postProcessingCtx.getAttribLocation(this.PostProcessingProgram, "aPosition");
-			this.#texCoordLoc = this.postProcessingCtx.getAttribLocation(this.PostProcessingProgram, "aTexCoord");
 	
 			this.postProcessingCtx.vertexAttribPointer(this.#positionLoc, 2, this.postProcessingCtx.FLOAT, false, 16, 0);
 			this.postProcessingCtx.enableVertexAttribArray(this.#positionLoc);
