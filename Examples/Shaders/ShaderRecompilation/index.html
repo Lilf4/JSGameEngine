@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="main.css">
+	<script src="../../../GameEngine.js"></script>
+	<script src="shaders.js"></script>
+</head>
+<body style="background-color: darkslategray;">
+	<canvas id="Screen"></canvas>
+	<script src="main.js"></script>
+	<span id="SideBar" style="color: white;">
+		<h2>Shader Options</h2>
+		<label>Current Shader:</label>
+		<select id="Shader" name="Shader" onchange="ChangeShader(this.value)">
+			<option value="1" selected>Flowy Hole</option>
+			<option value="2">Fancy Lights</option>
+			<option value="3">Pipes!</option>
+		</select>
+		<label>Time Scale Multiplier:</label>
+		<input type="number" min="0" max="10" value="1" step="0.1" oninput="ChangeTimeScale(this.value)">
+	</span>
+</body>
+</html>
