@@ -126,8 +126,7 @@ class GameEngine {
 			
 			this.PostProcessingProgram = this.postProcessingCtx.createProgram();
 			this.PostProcessingBuffer = this.postProcessingCtx.createBuffer();
-			console.log(this.postProcessingCanvas)
-			console.log(this.postProcessingCtx)
+			
 			this.postProcessingCanvas.width = Size.x;
 			this.postProcessingCanvas.height = Size.y;
 			this.postProcessingCtx.viewport(0, 0, this.postProcessingCanvas.width, this.postProcessingCanvas.height);
