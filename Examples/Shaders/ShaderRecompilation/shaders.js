@@ -11,8 +11,8 @@ var HoleThingie = `precision mediump float;
 
 uniform sampler2D uTexture;
 uniform vec2 uResolution;
-uniform float u_timeScale;
-uniform float uTime;
+uniform vec3 u_colorThingie;
+uniform float u_c_time;
 
 varying vec2 vTexCoord;
 
@@ -28,17 +28,17 @@ void main() {
     vec2 q = 5.0 * p - d;
 
     vec2 c = p * mat2(1.0, 1.0, d / (0.1 + 5.0 / dot(q, q)));
-    vec2 v = c * mat2(cos(log(length(c)) + (uTime * u_timeScale) * 0.2 + vec4(0.0, 33.0, 11.0, 0.0))) * 5.0;
+    vec2 v = c * mat2(cos(log(length(c)) + u_c_time * 0.2 + vec4(0.0, 33.0, 11.0, 0.0))) * 5.0;
 
     for (int j = 0; j < 9; j++) { // Using an integer loop variable instead
         O += 1.0 + sin(v.xyyx);
-        v += 0.7 * sin(v.yx * float(j) + (uTime * u_timeScale)) / float(j + 1) + 0.5;
+        v += 0.7 * sin(v.yx * float(j) + u_c_time) / float(j + 1) + 0.5;
     }
 
     i = length(sin(v / 0.3) * 0.2 + c * vec2(1.0, 2.0)) - 1.0;
 
     O = 1.0 - exp(
-        -exp(c.x * vec4(0.6, -0.4, -1.0, 0.0)) 
+        -exp(c.x * vec4(u_colorThingie.xyz, 0.0)) 
         / O
         / (1.0 + i * i)
         / (0.5 + 3.5 * exp(0.3 * c.y - dot(c, c)))
@@ -51,10 +51,11 @@ void main() {
 
 var FancyLights = `precision mediump float;
 
-uniform float uTime;
+uniform float u_c_time;
 uniform vec2 uResolution;
 varying vec2 vTexCoord;
 uniform sampler2D uTexture;
+uniform float u_timeScale;
 
 vec3 palette(float d) {
     return mix(vec3(0.2, 0.7, 0.9), vec3(1.0, 0.0, 1.0), d);
@@ -68,7 +69,7 @@ vec2 rotate(vec2 p, float a) {
 
 float map(vec3 p) {
     for (int i = 0; i < 8; ++i) {
-        float t = uTime * 0.2;
+        float t = u_c_time * 0.2;
         p.xz = rotate(p.xz, t);
         p.xy = rotate(p.xy, t * 1.89);
         p.xz = abs(p.xz);
@@ -105,7 +106,7 @@ void main() {
     vec2 uv = (fragCoord - (uResolution.xy * 0.5)) / uResolution.x;
 
     vec3 ro = vec3(0.0, 0.0, -50.0);
-    ro.xz = rotate(ro.xz, uTime);
+    ro.xz = rotate(ro.xz, u_c_time);
     vec3 cf = normalize(-ro);
     vec3 cs = normalize(cross(cf, vec3(0.0, 1.0, 0.0)));
     vec3 cu = normalize(cross(cf, cs));
@@ -121,9 +122,11 @@ void main() {
 
 var Pipes = `precision mediump float;
 
-uniform float uTime;
+uniform float u_c_time;
 uniform vec2 uResolution;
 varying vec2 vTexCoord;
+uniform float u_timeScale;
+uniform vec3 u_pipeColorThingie;
 
 #define hash(x) fract(sin(x) * 43758.5453123)
 
@@ -163,15 +166,15 @@ void main() {
 
     vec3 col = vec3(0.0);
     vec3 ro = vec3(0.0, 0.0, -1.0), rt = vec3(0.0);
-    ro.z += uTime * 5.0;
-    rt.z += uTime * 5.0;
+    ro.z += u_c_time * 5.0;
+    rt.z += u_c_time * 5.0;
     ro += path(ro);
     rt += path(rt);
 
     vec3 z = normalize(rt - ro);
     vec3 x = vec3(z.z, 0.0, -z.x);
     float e = 0.0, g = 0.0;
-    vec3 rd = mat3(x, cross(z, x), z) * erot(normalize(vec3(uv, 1.0)), vec3(0.0, 0.0, 1.0), stepNoise(uTime + hash(uv.x * uv.y * uTime) * 0.05, 6.0));
+    vec3 rd = mat3(x, cross(z, x), z) * erot(normalize(vec3(uv, 1.0)), vec3(0.0, 0.0, 1.0), stepNoise(u_c_time + hash(uv.x * uv.y * u_c_time) * 0.05, 6.0));
 
     for (int i = 0; i < 99; ++i) { 
         vec3 p = ro + rd * g;
@@ -194,10 +197,10 @@ void main() {
         h = min(t, h);
         g += e = max(0.001, (t == h ? abs(h) : h));
 
-        col += (t == h ? vec3(0.3, 0.2, 0.1) * (100.0 * exp(-20.0 * fract(p.z * 0.25 + uTime))) * mod(floor(p.z * 4.0) + mod(floor(p.y * 4.0), 2.0), 2.0) : vec3(0.1)) * 0.0325 / exp(float(i) * float(i) * e);
+        col += (t == h ? vec3(0.3, 0.2, 0.1) * (100.0 * exp(-20.0 * fract(p.z * 0.25 + u_c_time))) * mod(floor(p.z * 4.0) + mod(floor(p.y * 4.0), 2.0), 2.0) : vec3(0.1)) * 0.0325 / exp(float(i) * float(i) * e);
     }
-
-    col = mix(col, vec3(0.9, 0.9, 1.1), 1.0 - exp(-0.01 * g * g * g));
+	
+    col = mix(col, vec3(u_pipeColorThingie.xyz), 1.0 - exp(-0.01 * g * g * g));
 
     gl_FragColor = vec4(col, 1.0);
 }`;
