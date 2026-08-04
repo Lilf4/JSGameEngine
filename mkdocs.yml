@@ -1,0 +1,40 @@
+site_name: JSGameEngine
+site_dir: docs
+docs_dir: docs-src
+
+theme:
+  name: material
+  highlightjs: true
+  palette:
+    - scheme: default  # Light mode
+      primary: blue
+      accent: blue
+  features:
+    - content.code.copy
+
+use_directory_urls: false
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Project Management:
+    - Initialise: project-management/Initialise.md
+  - Documentation:
+    - Overview: documentation/Overview.md
+    - GameEngine: documentation/GameEngine.md
+    - GameObjects:
+      - GameObject: documentation/GameObjects/GameObject.md
+      - VisibleObject: documentation/GameObjects/VisibleObject.md
+      - CustomShapeObject: documentation/GameObjects/CustomShapeObject.md
+      - ImageObject: documentation/GameObjects/ImageObject.md
+      - ImageAnimObject: documentation/GameObjects/ImageAnimObject.md
+      - TextObject: documentation/GameObjects/TextObject.md
+    - Vector2: documentation/Vector2.md
+    - Resource Manager: documentation/ResourceManager.md
+    - Globals: documentation/Globals.md
+  - Advanced:
+    - Template:
+      - Custom Template: advanced/template/custom.md
