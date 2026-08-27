@@ -1,6 +1,5 @@
 /*
  * TODO
- * Way too many things ;-;
  * Don't draw objects not currently on screen
  * */
 const BasicSquarePath = new Path2D();
